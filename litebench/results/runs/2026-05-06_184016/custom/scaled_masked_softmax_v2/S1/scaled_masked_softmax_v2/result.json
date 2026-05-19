@@ -1,0 +1,49 @@
+{
+  "mode": "custom",
+  "status": "success",
+  "op_name": "scaled_masked_softmax_v2",
+  "shape_id": "S1",
+  "dtype": "float16",
+  "server_name": "910b",
+  "device": "7",
+  "worker_url": "http://127.0.0.1:9001",
+  "custom_dir": "/home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2",
+  "compile_output_dir": "/home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output",
+  "impl_name": "scaled_masked_softmax_v2",
+  "command": [
+    "/usr/local/python3.11.14/bin/python3",
+    "/home/hrl-kope/OpenOps/benchmark/remote/compile_remote.py",
+    "--worker-url",
+    "http://127.0.0.1:9001",
+    "--client-id",
+    "gjz_910b",
+    "--op-name",
+    "scaled_masked_softmax_v2",
+    "--output-dir",
+    "/home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output",
+    "--device-id",
+    "7",
+    "--run-profiling"
+  ],
+  "timing": {
+    "ref_median_ms": 0.3179,
+    "custom_median_ms": 0.4296,
+    "speedup": 0.7401
+  },
+  "profiling": {
+    "task_duration_us": 204.98,
+    "aiv_time_us": 190.247,
+    "aiv_vec_ratio": 0.3071,
+    "aiv_scalar_ratio": 0.2089,
+    "aiv_mte2_ratio": 0.539,
+    "aiv_mte3_ratio": 0.1956,
+    "aiv_icache_miss_rate": 0.0089,
+    "op_name": "scaled_masked_softmax_v2",
+    "Profiling data saved to": "/home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/profiling_round_11.json"
+  },
+  "stdout": "",
+  "stderr": "INFO:remote_client:Initialized RemoteWorkerClient: http://127.0.0.1:9001, client_id=gjz_910b\nINFO:__main__:Checking remote worker health...\nINFO:httpx:HTTP Request: GET http://127.0.0.1:9001/health \"HTTP/1.1 200 OK\"\nINFO:__main__:Remote worker is healthy: Worker is healthy and CANN is available\nINFO:httpx:HTTP Request: GET http://127.0.0.1:9001/api/v1/status \"HTTP/1.1 200 OK\"\nINFO:__main__:Worker status: {'active_requests': 0, 'max_workers': 4, 'log_dir': '/home/hrl-kope/OpenOps/logs/benchmark', 'available_devices': 1, 'total_devices': 1, 'device_list': [7]}\nINFO:__main__:Adding reference file for evaluation: /home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/scaled_masked_softmax_v2_reference.py\nINFO:__main__:Adding custom file for evaluation: /home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/scaled_masked_softmax_v2_custom.py\nWARNING:__main__:CPP file not found: /home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/scaled_masked_softmax_v2.cpp\nINFO:__main__:Adding generate_pybind script: /home/hrl-kope/OpenOps/benchmark/assets/generate_pybind.py\nINFO:__main__:Adding template directory: /home/hrl-kope/OpenOps/benchmark/assets/template\nINFO:__main__:Creating package...\nINFO:remote_client:Added project directory: /home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/ScaledMaskedSoftmaxV2Custom\nINFO:remote_client:Added DSL file: /home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/scaled_masked_softmax_v2_dsl.py\nINFO:remote_client:Added additional file: output/scaled_masked_softmax_v2/scaled_masked_softmax_v2_reference.py\nINFO:remote_client:Added additional file: output/scaled_masked_softmax_v2/scaled_masked_softmax_v2_custom.py\nINFO:remote_client:Added additional file: generate_pybind.py\nINFO:remote_client:Created package: 6707200 bytes\nINFO:__main__:Sending profiling request to http://127.0.0.1:9001...\nINFO:httpx:HTTP Request: GET http://127.0.0.1:9001/health \"HTTP/1.1 200 OK\"\nINFO:remote_client:Sending profiling request to http://127.0.0.1:9001/api/v1/profile (attempt 1/4)\nINFO:remote_client:Package size: 6707200 bytes, num_trials: 10, timeout: 1800s\nINFO:httpx:HTTP Request: POST http://127.0.0.1:9001/api/v1/profile \"HTTP/1.1 200 OK\"\nINFO:remote_client:Profiling request completed: success=True, stage=profiling\nINFO:__main__:Profiling result: success=True, stage=profiling\nINFO:__main__:Remote profiling succeeded!\nINFO:__main__:\n============================================================\nINFO:__main__:TIMING RESULTS:\nINFO:__main__:  Reference:  0.3179 ms\nINFO:__main__:  Custom:     0.4296 ms\nINFO:__main__:  Speedup:    0.7401x\nINFO:__main__:============================================================\nINFO:__main__:\nPROFILING METRICS:\nINFO:__main__:  task_duration_us: 204.98\nINFO:__main__:  aiv_time_us: 190.247\nINFO:__main__:  aiv_vec_ratio: 0.3071\nINFO:__main__:  aiv_scalar_ratio: 0.2089\nINFO:__main__:  aiv_mte2_ratio: 0.539\nINFO:__main__:  aiv_mte3_ratio: 0.1956\nINFO:__main__:  aiv_icache_miss_rate: 0.0089\nINFO:__main__:  op_name: scaled_masked_softmax_v2\nINFO:__main__:Profiling data saved to: /home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/profiling_round_11.json\nINFO:__main__:\n=== Profile Log ===\nProfiling capture completed successfully\nmsprof export completed\nParsed op_summary: /home/hrl-kope/OpenOps/logs/benchmark/gjz_910b_scaled_masked_softmax_v2_20260506_184017_455575/profiling_data/device7_20260506_184048/PROF_000001_20260506184051475_OOBEAMLOPKOLQBFB/mindstudio_profiler_output/op_summary_20260506184053.csv\n",
+  "returncode": 0,
+  "error": "",
+  "created_at": "2026-05-06T18:40:59.774458"
+}

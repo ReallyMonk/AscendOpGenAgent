@@ -1,0 +1,80 @@
+{
+  "operator_name": "rms_norm",
+  "base_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel",
+  "files": {
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/pybind11.cpp",
+      "size_bytes": 2384,
+      "md5": "74ead1c9c0f2267be48cfd5176ae2611",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"rms_norm_tiling.h\"\n\nextern \"C\" void rms_norm_do_fp32(uint32_t, void*, uint8_t*, uint8_t*, uint8_t*);\nextern \"C\" void rms_norm_do_fp16(uint32_t, void*, uint8_t*, uint8_t*, uint8_t*);\nextern \"C\" void rms_norm_do_bf16(uint32_t, void*, uint8_t*, uint8_t*, uint8_t*);\n\nnamespace rms_norm_ext {\nusing LaunchFn = void (*)(uint32_t, void*, uint8_t*, uint8_t*, uint8_t*);\n\npybind11::tuple run_rms_norm(const at::Tensor &x, double eps = 1e-6) {\n    TORCH_CHECK(x.dim() == 2, \"x must be [M, N]\");\n    TORCH_CHECK(x.scalar_type() == at::kFloat || x.scalar_type() == at::kHalf || x.scalar_type() == at::kBFloat16, \"unsupported dtype\");\n    TORCH_CHECK(x.is_contiguous(), \"x must be contiguous\");\n    const auto m = static_cast<int32_t>(x.sizes()[0]), n = static_cast<int32_t>(x.sizes()[1]);\n    const int32_t mNum = (m + DEFAULT_BLOCK_M - 1) / DEFAULT_BLOCK_M;\n    const int32_t usedCoreNum = std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES, mNum);\n    const int32_t tasksPerCore = (mNum + usedCoreNum - 1) / usedCoreNum;\n    at::Tensor y = at::empty_like(x);\n    at::Tensor tilingCpu = at::empty({static_cast<long>(sizeof(RmsNormKernelTiling))}, at::device(at::kCPU).dtype(at::kByte));\n    auto *t = reinterpret_cast<RmsNormKernelTiling *>(tilingCpu.data_ptr());\n    t->M = m; t->N = n; t->blockM = DEFAULT_BLOCK_M; t->usedCoreNum = usedCoreNum; t->tasksPerCore = tasksPerCore;\n    t->eps = static_cast<float>(eps); t->invN = 1.0f / static_cast<float>(n);\n    auto tilingNpu = tilingCpu.to(at::kPrivateUse1);\n    auto aclStream = c10_npu::getCurrentNPUStream().stream(false);\n    LaunchFn launch = nullptr;\n    if (x.scalar_type() == at::kFloat) launch = rms_norm_do_fp32;\n    else if (x.scalar_type() == at::kHalf) launch = rms_norm_do_fp16;\n    else if (x.scalar_type() == at::kBFloat16) launch = rms_norm_do_bf16;\n    else TORCH_CHECK(false, \"unsupported dtype\");\n    launch(usedCoreNum, aclStream,\n        static_cast<uint8_t *>(const_cast<void *>(x.storage().data())),\n        static_cast<uint8_t *>(const_cast<void *>(y.storage().data())),\n        static_cast<uint8_t *>(const_cast<void *>(tilingNpu.storage().data())));\n    return pybind11::make_tuple(y);\n}\n}\nPYBIND11_MODULE(_rms_norm_ext, m) { m.def(\"run_rms_norm\", &rms_norm_ext::run_rms_norm, \"\"); }\n"
+    },
+    "rms_norm_fp32.cpp": {
+      "path": "rms_norm_fp32.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/rms_norm_fp32.cpp",
+      "size_bytes": 473,
+      "md5": "5464dab15f3ec682e98b5c1570ead2ec",
+      "extension": ".cpp",
+      "content": "#include \"rms_norm_kernel.h\"\nextern \"C\" __global__ __aicore__ void rms_norm_custom_fp32(GM_ADDR x, GM_ADDR y, GM_ADDR tiling) {\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe pipe;\n    RmsNormKernel<float> kernel; kernel.Init(x, y, tiling, &pipe); kernel.Process();\n}\nextern \"C\" void rms_norm_do_fp32(uint32_t blockDim, void *stream, uint8_t *x, uint8_t *y, uint8_t *tiling) {\n    rms_norm_custom_fp32<<<blockDim, nullptr, stream>>>(x, y, tiling);\n}\n"
+    },
+    "rms_norm_fp16.cpp": {
+      "path": "rms_norm_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/rms_norm_fp16.cpp",
+      "size_bytes": 472,
+      "md5": "0b1e0a4516cc46240a8e96a9030598f7",
+      "extension": ".cpp",
+      "content": "#include \"rms_norm_kernel.h\"\nextern \"C\" __global__ __aicore__ void rms_norm_custom_fp16(GM_ADDR x, GM_ADDR y, GM_ADDR tiling) {\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe pipe;\n    RmsNormKernel<half> kernel; kernel.Init(x, y, tiling, &pipe); kernel.Process();\n}\nextern \"C\" void rms_norm_do_fp16(uint32_t blockDim, void *stream, uint8_t *x, uint8_t *y, uint8_t *tiling) {\n    rms_norm_custom_fp16<<<blockDim, nullptr, stream>>>(x, y, tiling);\n}\n"
+    },
+    "rms_norm_bf16.cpp": {
+      "path": "rms_norm_bf16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/rms_norm_bf16.cpp",
+      "size_bytes": 478,
+      "md5": "239d98903c918fab82bf2a286e14df38",
+      "extension": ".cpp",
+      "content": "#include \"rms_norm_kernel.h\"\nextern \"C\" __global__ __aicore__ void rms_norm_custom_bf16(GM_ADDR x, GM_ADDR y, GM_ADDR tiling) {\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe pipe;\n    RmsNormKernel<bfloat16_t> kernel; kernel.Init(x, y, tiling, &pipe); kernel.Process();\n}\nextern \"C\" void rms_norm_do_bf16(uint32_t blockDim, void *stream, uint8_t *x, uint8_t *y, uint8_t *tiling) {\n    rms_norm_custom_bf16<<<blockDim, nullptr, stream>>>(x, y, tiling);\n}\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/CMakeLists.txt",
+      "size_bytes": 2758,
+      "md5": "618edd647a5dd0105941d461b37f69d9",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"system on chip type\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"ASCEND CANN package installation directory\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode: npu\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\nelse()\n    message(FATAL_ERROR \"ascendc_kernel_cmake does not exist\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC rms_norm_fp32.cpp rms_norm_fp16.cpp rms_norm_bf16.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _rms_norm_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "rms_norm_tiling.h": {
+      "path": "rms_norm_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/rms_norm_tiling.h",
+      "size_bytes": 319,
+      "md5": "8072312d53611ccd87545224e50ebce8",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef RMS_NORM_TILING_H\n#define RMS_NORM_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct RmsNormKernelTiling { int32_t M; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore; float eps; float invN; };\n#endif\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/kernel_common.h",
+      "size_bytes": 498,
+      "md5": "a9c85dbc828bbc6085db96bb50dc49f9",
+      "extension": ".h",
+      "content": "#ifndef KERNEL_COMMON_H\n#define KERNEL_COMMON_H\n#include <cstddef>\n#include <cstdint>\n#include \"kernel_operator.h\"\n__aicore__ inline uint32_t CeilDivU32(uint32_t a, uint32_t b) { return (a + b - 1U) / b; }\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *tiling, GM_ADDR tilingGM) {\n    int32_t *dst = reinterpret_cast<int32_t *>(tiling);\n    auto *src = reinterpret_cast<__gm__ int32_t *>(tilingGM);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) dst[i] = src[i];\n}\n#endif\n"
+    },
+    "rms_norm_kernel.h": {
+      "path": "rms_norm_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/rms_norm/kernel/rms_norm_kernel.h",
+      "size_bytes": 4453,
+      "md5": "cc5eaa89f31c8fe6fd0fa409c91b8a04",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef RMS_NORM_KERNEL_H\n#define RMS_NORM_KERNEL_H\n#include <cmath>\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"rms_norm_tiling.h\"\n\ntemplate <typename dataType>\nclass RmsNormKernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR tilingGM, AscendC::TPipe *pipe) {\n        CopyTiling(&tiling_, tilingGM);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ dataType *>(x), tiling_.M * tiling_.N);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ dataType *>(y), tiling_.M * tiling_.N);\n        if ASCEND_IS_AIV {\n            pipe_ = pipe;\n            subBlockRows_ = tiling_.blockM / AscendC::GetSubBlockNum();\n            pipe_->InitBuffer(xInQueue_, 1, tiling_.N * sizeof(dataType));\n            pipe_->InitBuffer(yOutQueue_, 1, tiling_.N * sizeof(dataType));\n            if constexpr (!std::is_same_v<dataType, float>) {\n                pipe_->InitBuffer(castBuf_, tiling_.N * sizeof(float));\n            }\n            pipe_->InitBuffer(computeBuf_, tiling_.N * sizeof(float));\n        }\n    }\n\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int coreIdx = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int subBlockIdx = AscendC::GetSubBlockIdx();\n            for (int localIdx = 0; localIdx < tiling_.tasksPerCore; ++localIdx) {\n                const int bx = coreIdx * tiling_.tasksPerCore + localIdx;\n                if (bx >= BlockCount()) continue;\n                for (int row = 0; row < subBlockRows_; ++row) {\n                    const int rowIdx = bx * tiling_.blockM + subBlockIdx * subBlockRows_ + row;\n                    if (rowIdx < tiling_.M) ProcessRow(rowIdx);\n                }\n            }\n        }\n    }\n\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (tiling_.M + tiling_.blockM - 1) / tiling_.blockM; }\n\n    __aicore__ inline void CopyIn(int32_t rowIdx) {\n        xInQueue_.AllocTensor<dataType>(xInLocal_);\n        AscendC::DataCopy(xInLocal_, xGM_[rowIdx * tiling_.N], static_cast<uint32_t>(tiling_.N));\n        xInQueue_.EnQue(xInLocal_);\n    }\n\n    __aicore__ inline void CopyOut(int32_t rowIdx) {\n        yOutQueue_.DeQue<dataType>(yOutLocal_);\n        AscendC::DataCopy(yGM_[rowIdx * tiling_.N], yOutLocal_, static_cast<uint32_t>(tiling_.N));\n        yOutQueue_.FreeTensor(yOutLocal_);\n    }\n\n    __aicore__ inline void ComputeRow(int32_t rowIdx) {\n        xInQueue_.DeQue<dataType>(xInLocal_);\n        yOutQueue_.AllocTensor<dataType>(yOutLocal_);\n        AscendC::LocalTensor<float> addFp32 = computeBuf_.Get<float>();\n\n        if constexpr (std::is_same_v<dataType, float>) {\n            AscendC::LocalTensor<float> xFp32 = xInLocal_.template ReinterpretCast<float>();\n            float sumSqVal = 0.0f;\n            for (int32_t i = 0; i < tiling_.N; ++i) { float v = xFp32(i); sumSqVal += v * v; }\n            float invRms = 1.0f / sqrt(sumSqVal * tiling_.invN + tiling_.eps);\n            AscendC::LocalTensor<float> yFp32 = yOutLocal_.template ReinterpretCast<float>();\n            AscendC::Muls(yFp32, xFp32, invRms, tiling_.N);\n        } else {\n            AscendC::LocalTensor<float> xFp32 = castBuf_.Get<float>();\n            AscendC::Cast(xFp32, xInLocal_, AscendC::RoundMode::CAST_NONE, tiling_.N);\n            AscendC::PipeBarrier<PIPE_V>();\n            float sumSqVal = 0.0f;\n            for (int32_t i = 0; i < tiling_.N; ++i) { float v = xFp32(i); sumSqVal += v * v; }\n            float invRms = 1.0f / sqrt(sumSqVal * tiling_.invN + tiling_.eps);\n            AscendC::Muls(addFp32, xFp32, invRms, tiling_.N);\n            AscendC::Cast(yOutLocal_, addFp32, AscendC::RoundMode::CAST_NONE, tiling_.N);\n            AscendC::PipeBarrier<PIPE_V>();\n        }\n        yOutQueue_.EnQue(yOutLocal_);\n        xInQueue_.FreeTensor(xInLocal_);\n    }\n\n    __aicore__ inline void ProcessRow(int rowIdx) { CopyIn(rowIdx); ComputeRow(rowIdx); CopyOut(rowIdx); }\n\nprivate:\n    RmsNormKernelTiling tiling_{}; AscendC::TPipe *pipe_{nullptr}; int subBlockRows_{0};\n    AscendC::GlobalTensor<dataType> xGM_; AscendC::GlobalTensor<dataType> yGM_;\n    AscendC::TQue<AscendC::TPosition::VECIN, 0> xInQueue_;\n    AscendC::TQue<AscendC::TPosition::VECOUT, 0> yOutQueue_;\n    AscendC::TBuf<AscendC::TPosition::VECCALC> castBuf_;\n    AscendC::TBuf<AscendC::TPosition::VECCALC> computeBuf_;\n    AscendC::LocalTensor<dataType> xInLocal_; AscendC::LocalTensor<dataType> yOutLocal_;\n};\n#endif\n"
+    }
+  },
+  "metadata": {
+    "total_files": 8,
+    "total_size_bytes": 11835,
+    "file_types": {
+      ".cpp": 4,
+      ".txt": 1,
+      ".h": 3
+    }
+  }
+}

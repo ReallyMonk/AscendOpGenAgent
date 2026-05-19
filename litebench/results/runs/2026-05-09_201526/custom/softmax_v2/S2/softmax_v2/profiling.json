@@ -1,0 +1,6 @@
+{
+  "profiling_available": false,
+  "timing": {},
+  "profiling": {},
+  "error": "INFO:remote_client:Initialized RemoteWorkerClient: http://127.0.0.1:9001, client_id=gjz_910b\nINFO:__main__:Checking remote worker health...\nERROR:__main__:Remote worker is not healthy: Health check failed: All connection attempts failed"
+}

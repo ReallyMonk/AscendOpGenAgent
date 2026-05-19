@@ -1,0 +1,1 @@
+{"op_name": "softmax_v2", "shape_id": "S4", "api": "torch.nn.functional.softmax", "runner_type": "torch_api", "input_builder": "softmax_4d", "attrs": {"dim": -1}, "shape_params": {"B": 1, "heads": 28, "S": 4096}, "inputs": {"x": {"shape": [1, 28, 4096, 4096], "dtype": "float16", "distribution": "normal", "low": null, "high": null, "threshold": null}}}

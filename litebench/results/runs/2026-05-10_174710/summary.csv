@@ -1,0 +1,2 @@
+run_id,mode,op_name,shape_id,benchmark_layer,benchmark_role,category,dtype,server_name,device,backend,status,correctness,e2e_median_ms,e2e_p95_ms,profiling_available,profiling_path,custom_dir,worker_url,created_at,source,cache_key
+2026-05-10_174710,custom,gelu,S2,foundation,anchor,activation,float16,910b,7,remote_custom,failed,,,,False,,/home/hrl-kope/AscendOpGenAgent/output/gelu,http://127.0.0.1:9027,2026-05-10T17:47:10.322100,measured,

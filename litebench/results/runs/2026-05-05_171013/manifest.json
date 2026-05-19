@@ -1,0 +1,13 @@
+{
+  "run_id": "2026-05-05_171013",
+  "registry_path": "/home/hrl-kope/OpenOps/benchmark/registry/lightweight_benchmark_registry_v2.json",
+  "runner_template_path": "/home/hrl-kope/OpenOps/benchmark/registry/runner_templates_v1.json",
+  "server_config_path": "/home/hrl-kope/OpenOps/benchmark/registry/servers.json",
+  "server_name": "910b",
+  "worker_url": "http://127.0.0.1:9001",
+  "device": "7",
+  "warmup": 20,
+  "repeat": 100,
+  "profiling": false,
+  "created_at": "2026-05-05T17:10:13.358264"
+}

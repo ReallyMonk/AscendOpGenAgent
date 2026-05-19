@@ -1,0 +1,33 @@
+=== Build Script Output ===
+Return code: 1
+
+=== STDOUT ===
+Building gelu AscendC kernel...
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring incomplete, errors occurred!
+See also "/home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_w1779isr/extract/GeluCustom/build/CMakeFiles/CMakeOutput.log".
+
+
+=== STDERR ===
+CMake Error at /usr/share/cmake-3.22/Modules/FindPackageHandleStandardArgs.cmake:230 (message):
+  Could NOT find Python (missing: Python_EXECUTABLE Python_INCLUDE_DIRS
+  Python_LIBRARIES Interpreter Development Development.Module
+  Development.Embed)
+Call Stack (most recent call first):
+  /usr/share/cmake-3.22/Modules/FindPackageHandleStandardArgs.cmake:594 (_FPHSA_FAILURE_MESSAGE)
+  /usr/share/cmake-3.22/Modules/FindPython.cmake:561 (find_package_handle_standard_args)
+  CMakeLists.txt:8 (find_package)
+
+
+

@@ -1,0 +1,49 @@
+{
+  "mode": "custom",
+  "status": "success",
+  "op_name": "clipped_swiglu",
+  "shape_id": "S1",
+  "dtype": "float16",
+  "server_name": "910b",
+  "device": "7",
+  "worker_url": "http://127.0.0.1:9001",
+  "custom_dir": "/home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu",
+  "compile_output_dir": "/home/hrl-kope/OpenOps/baseline_implementation",
+  "impl_name": "clipped_swiglu",
+  "command": [
+    "/usr/local/python3.11.14/bin/python3",
+    "/home/hrl-kope/OpenOps/benchmark/remote/compile_remote.py",
+    "--worker-url",
+    "http://127.0.0.1:9001",
+    "--client-id",
+    "gjz_910b",
+    "--op-name",
+    "clipped_swiglu",
+    "--output-dir",
+    "/home/hrl-kope/OpenOps/baseline_implementation",
+    "--device-id",
+    "7",
+    "--run-profiling"
+  ],
+  "timing": {
+    "ref_median_ms": 0.2119,
+    "custom_median_ms": 0.2122,
+    "speedup": 0.9987
+  },
+  "profiling": {
+    "task_duration_us": 95.56,
+    "aiv_time_us": 84.207,
+    "aiv_vec_ratio": 0.0946,
+    "aiv_scalar_ratio": 0.2719,
+    "aiv_mte2_ratio": 0.6565,
+    "aiv_mte3_ratio": 0.2486,
+    "aiv_icache_miss_rate": 0.0013,
+    "op_name": "clipped_swiglu",
+    "Profiling data saved to": "/home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/profiling_round_0.json"
+  },
+  "stdout": "",
+  "stderr": "INFO:remote_client:Initialized RemoteWorkerClient: http://127.0.0.1:9001, client_id=gjz_910b\nINFO:__main__:Checking remote worker health...\nINFO:httpx:HTTP Request: GET http://127.0.0.1:9001/health \"HTTP/1.1 200 OK\"\nINFO:__main__:Remote worker is healthy: Worker is healthy and CANN is available\nINFO:httpx:HTTP Request: GET http://127.0.0.1:9001/api/v1/status \"HTTP/1.1 200 OK\"\nINFO:__main__:Worker status: {'active_requests': 0, 'max_workers': 4, 'log_dir': '/home/hrl-kope/OpenOps/logs/benchmark', 'available_devices': 1, 'total_devices': 1, 'device_list': [7]}\nINFO:__main__:Adding reference file for evaluation: /home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/clipped_swiglu_reference.py\nINFO:__main__:Adding custom file for evaluation: /home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/clipped_swiglu_custom.py\nWARNING:__main__:CPP file not found: /home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/clipped_swiglu.cpp\nINFO:__main__:Adding generate_pybind script: /home/hrl-kope/OpenOps/benchmark/assets/generate_pybind.py\nINFO:__main__:Adding template directory: /home/hrl-kope/OpenOps/benchmark/assets/template\nINFO:__main__:Creating package...\nINFO:remote_client:Added project directory: /home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/ClippedSwigluCustom\nINFO:remote_client:Added DSL file: /home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/clipped_swiglu_dsl.py\nINFO:remote_client:Added additional file: output/clipped_swiglu/clipped_swiglu_reference.py\nINFO:remote_client:Added additional file: output/clipped_swiglu/clipped_swiglu_custom.py\nINFO:remote_client:Added additional file: generate_pybind.py\nINFO:remote_client:Created package: 460800 bytes\nINFO:__main__:Sending profiling request to http://127.0.0.1:9001...\nINFO:httpx:HTTP Request: GET http://127.0.0.1:9001/health \"HTTP/1.1 200 OK\"\nINFO:remote_client:Sending profiling request to http://127.0.0.1:9001/api/v1/profile (attempt 1/4)\nINFO:remote_client:Package size: 460800 bytes, num_trials: 10, timeout: 1800s\nINFO:httpx:HTTP Request: POST http://127.0.0.1:9001/api/v1/profile \"HTTP/1.1 200 OK\"\nINFO:remote_client:Profiling request completed: success=True, stage=profiling\nINFO:__main__:Profiling result: success=True, stage=profiling\nINFO:__main__:Remote profiling succeeded!\nINFO:__main__:\n============================================================\nINFO:__main__:TIMING RESULTS:\nINFO:__main__:  Reference:  0.2119 ms\nINFO:__main__:  Custom:     0.2122 ms\nINFO:__main__:  Speedup:    0.9987x\nINFO:__main__:============================================================\nINFO:__main__:\nPROFILING METRICS:\nINFO:__main__:  task_duration_us: 95.56\nINFO:__main__:  aiv_time_us: 84.207\nINFO:__main__:  aiv_vec_ratio: 0.0946\nINFO:__main__:  aiv_scalar_ratio: 0.2719\nINFO:__main__:  aiv_mte2_ratio: 0.6565\nINFO:__main__:  aiv_mte3_ratio: 0.2486\nINFO:__main__:  aiv_icache_miss_rate: 0.0013\nINFO:__main__:  op_name: clipped_swiglu\nINFO:__main__:Profiling data saved to: /home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/profiling_round_0.json\nINFO:__main__:\n=== Profile Log ===\nProfiling capture completed successfully\nmsprof export completed\nParsed op_summary: /home/hrl-kope/OpenOps/logs/benchmark/gjz_910b_clipped_swiglu_20260506_190036_868256/profiling_data/device7_20260506_190108/PROF_000001_20260506190110657_NPGIDIKMRHJCFKQA/mindstudio_profiler_output/op_summary_20260506190112.csv\n",
+  "returncode": 0,
+  "error": "",
+  "created_at": "2026-05-06T19:01:18.972070"
+}

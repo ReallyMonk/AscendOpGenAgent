@@ -1,0 +1,23 @@
+{
+  "mode": "baseline",
+  "source": "measured",
+  "cache_key": "f25e071895dfbcff",
+  "server_name": "910b",
+  "hardware": "Ascend910B",
+  "device": "7",
+  "op_name": "add_rms_norm_quant",
+  "shape_id": "S3",
+  "dtype": "float16",
+  "status": "failed",
+  "correctness": "not_checked",
+  "e2e_median_ms": "",
+  "e2e_p95_ms": "",
+  "warmup": 20,
+  "repeat": 100,
+  "profiling_enabled": false,
+  "worker_url": "http://127.0.0.1:9027",
+  "remote_stage": "baseline_runner",
+  "remote_log_dir": "logs/910b_baseline_20260510_163507_735033",
+  "remote_error": "Traceback (most recent call last):\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 265, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 259, in main\n    result = run_case(case, args.device_id, args.warmup, args.repeat, profiling=args.profiling)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 226, in run_case\n    timing = _run_e2e(fn, args, kwargs, warmup, repeat)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 168, in _run_e2e\n    _ = fn(*args, **kwargs)\n        ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.11.14/lib/python3.11/site-packages/torch/_ops.py\", line 1255, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: npu_add_rms_norm_quant:build/CMakeFiles/torch_npu.dir/compiler_depend.ts:43 NPU function error: call aclnnAddRmsNormQuantV2 failed, error code is 161002\n[ERROR] 2026-05-10-16:35:17 (PID:966986, Device:7, RankID:-1) ERR00100 PTA call acl api failed.\n[PID: 966986] 2026-05-10-16:35:17.212.655 AclNN_Parameter_Error(EZ1001): Expected tensor for gamma to have same size as tensor for scales1, but [7168] does not equal [1].\n\n",
+  "created_at": "2026-05-10T16:35:22.106102"
+}

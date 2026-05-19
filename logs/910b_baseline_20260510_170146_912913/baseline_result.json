@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "timing": {
+    "median_ms": 0.157042,
+    "p95_ms": 0.200333
+  },
+  "profiling": {
+    "error": "profiling_disabled"
+  }
+}

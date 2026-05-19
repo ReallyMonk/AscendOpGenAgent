@@ -1,0 +1,13 @@
+{
+  "mode": "custom",
+  "status": "failed",
+  "op_name": "scaled_masked_softmax_v2",
+  "shape_id": "S1",
+  "dtype": "float16",
+  "server_name": "910b",
+  "device": "7",
+  "worker_url": "http://127.0.0.1:9001",
+  "custom_dir": "/home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/ScaledMaskedSoftmaxV2Custom",
+  "error": "cannot find operator root for scaled_masked_softmax_v2 under /home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/ScaledMaskedSoftmaxV2Custom",
+  "created_at": "2026-05-06T18:24:59.394497"
+}

@@ -1,0 +1,15 @@
+run_id,op_name,shape_id,server_name,device,task_duration_us,aiv_vec_ratio,aiv_scalar_ratio,aiv_mte2_ratio,aiv_mte3_ratio,aiv_icache_miss_rate,aic_mac_ratio,cube_utilization,profiling_error
+2026-05-10_163532,relu,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,rms_norm,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,rms_norm,S3,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,batch_mat_mul_v3,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,batch_mat_mul_v3,S3,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,avg_pool2d,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,embedding_bag,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,add_rms_norm,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,ge_glu_v2,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,cross_entropy_loss,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,clipped_swiglu,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,scaled_masked_softmax_v2,S2,910b,7,,,,,,,,,profiling_disabled
+2026-05-10_163532,add_rms_norm_dynamic_quant,S2,910b,7,,,,,,,,,
+2026-05-10_163532,add_rms_norm_dynamic_quant,S3,910b,7,,,,,,,,,

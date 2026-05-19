@@ -1,0 +1,204 @@
+=== Build Script Output ===
+Return code: 2
+
+=== STDOUT ===
+Building gelu AscendC kernel...
+-- The C compiler identification is Clang 15.0.5
+-- The CXX compiler identification is Clang 15.0.5
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/local/Ascend/cann-8.5.0/bin/ccec - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/local/Ascend/cann-8.5.0/bin/ccec - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python: /usr/local/python3.11.14/bin/python3 (found version "3.11.14") found components: Interpreter Development Development.Module Development.Embed 
+-- Found Torch: /usr/local/python3.11.14/lib/python3.11/site-packages/torch/lib/libtorch.so  
+-- Performing Test HAS_FLTO_THIN
+-- Performing Test HAS_FLTO_THIN - Failed
+-- Performing Test HAS_FLTO_AUTO
+-- Performing Test HAS_FLTO_AUTO - Failed
+-- Performing Test HAS_FLTO
+-- Performing Test HAS_FLTO - Failed
+-- Found pybind11: /usr/local/python3.11.14/lib/python3.11/site-packages/pybind11/include (found version "3.0.4")
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/build
+[ 66%] Building CXX object CMakeFiles/_ext_cpp.dir/gelu.cpp.o
+[ 66%] Building CXX object CMakeFiles/_ext_cpp.dir/pybind11.cpp.o
+
+
+=== STDERR ===
+CMake Warning at /usr/local/python3.11.14/lib/python3.11/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  static library kineto_LIBRARY-NOTFOUND not found.
+Call Stack (most recent call first):
+  /usr/local/python3.11.14/lib/python3.11/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:125 (append_torchlib_if_found)
+  CMakeLists.txt:16 (find_package)
+
+
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:33:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:267:1: error: decomposition declaration template not supported
+template <class... Args>
+^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:268:11: error: expected ';' at end of declaration
+__aicore__ inline void AssertImpl(__gm__ const char* fmt, Args&&... args);
+          ^
+          ;
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:268:35: error: unknown type name '__gm__'
+__aicore__ inline void AssertImpl(__gm__ const char* fmt, Args&&... args);
+                                  ^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:268:59: error: unknown type name 'Args'
+__aicore__ inline void AssertImpl(__gm__ const char* fmt, Args&&... args);
+                                                          ^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:268:65: error: type 'int &&' of function parameter pack does not contain any unexpanded parameter packs
+__aicore__ inline void AssertImpl(__gm__ const char* fmt, Args&&... args);
+                                                          ~~~~~~^~~~~~~~
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:270:1: error: decomposition declaration template not supported
+template <class... Args>
+^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:271:11: error: expected ';' at end of declaration
+__aicore__ static __attribute__ ((noinline)) void AssertPrint(__gm__ const char* fmt, Args&&... args)
+          ^
+          ;
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:271:63: error: unknown type name '__gm__'
+__aicore__ static __attribute__ ((noinline)) void AssertPrint(__gm__ const char* fmt, Args&&... args)
+                                                              ^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:271:87: error: unknown type name 'Args'
+__aicore__ static __attribute__ ((noinline)) void AssertPrint(__gm__ const char* fmt, Args&&... args)
+                                                                                      ^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:271:93: error: type 'int &&' of function parameter pack does not contain any unexpanded parameter packs
+__aicore__ static __attribute__ ((noinline)) void AssertPrint(__gm__ const char* fmt, Args&&... args)
+                                                                                      ~~~~~~^~~~~~~~
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_log.h:273:34: error: pack expansion does not contain any unexpanded parameter packs
+    AscendC::AssertImpl(fmt, args...);
+                             ~~~~^
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:34:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:132:1: error: a type specifier is required for all declarations
+__aicore__ constexpr uint8_t EventToIndexAic(HardEvent evt)
+^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:20: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                   ^
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:34:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:132:1: error: decomposition declaration cannot be declared with type 'int'; declared type must be 'auto' or reference to 'auto'
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:20: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                   ^
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:34:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:132:1: error: decomposition declaration '[aicore]' requires an initializer
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:20: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                   ^
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:34:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:132:11: error: expected ';' after top level declarator
+__aicore__ constexpr uint8_t EventToIndexAic(HardEvent evt)
+          ^
+          ;
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:189:1: error: a type specifier is required for all declarations
+__aicore__ constexpr uint8_t EventToIndexAiv(HardEvent evt)
+^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:20: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                   ^
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:34:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:189:1: error: decomposition declaration cannot be declared with type 'int'; declared type must be 'auto' or reference to 'auto'
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:20: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                   ^
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:34:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:189:1: error: redefinition of 'aicore'
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:21: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                    ^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:132:1: note: previous definition is here
+__aicore__ constexpr uint8_t EventToIndexAic(HardEvent evt)
+^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:21: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                    ^
+In file included from /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/gelu.cpp:1:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/kernel_operator.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_impl.h:22:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tpipe.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tpipe_base.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_tensor_impl.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/asc/include/basic_api/kernel_tensor.h:18:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_utils.h:17:
+In file included from /usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/utils/kernel_utils_macros.h:34:
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_event.h:189:1: error: decomposition declaration '[aicore]' requires an initializer
+__aicore__ constexpr uint8_t EventToIndexAiv(HardEvent evt)
+^
+/usr/local/Ascend/cann-8.5.0/aarch64-linux/ascendc/include/basic_api/impl/kernel_macros.h:38:20: note: expanded from macro '__aicore__'
+#define __aicore__ [aicore]
+                   ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+make[2]: *** [CMakeFiles/_ext_cpp.dir/build.make:76: CMakeFiles/_ext_cpp.dir/gelu.cpp.o] Error 1
+make[2]: *** Waiting for unfinished jobs....
+/home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_5393yzdw/extract/GeluCustom/pybind11.cpp:6:10: fatal error: 'acl/acl.h' file not found
+#include "acl/acl.h"
+         ^~~~~~~~~~~
+1 error generated.
+make[2]: *** [CMakeFiles/_ext_cpp.dir/build.make:90: CMakeFiles/_ext_cpp.dir/pybind11.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/_ext_cpp.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+

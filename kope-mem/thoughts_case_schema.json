@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "thoughts_case_schema",
+  "title": "ThoughtKernelCase",
+  "description": "AscendC 算子优化经验记录的核心数据结构",
+  "type": "object",
+  "required": ["case_id", "kernel", "thought", "scene", "effect", "chain", "runtime"],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Case 的唯一标识符",
+      "pattern": "^case_[A-Za-z0-9]+_sess_[0-9]{8}_[0-9a-zA-Z]+_[0-9]+$",
+      "examples": ["case_LeakyReLU_sess_20260427_01_1"]
+    },
+    "kernel": {
+      "type": "object",
+      "description": "目标算子的基本属性",
+      "required": ["name", "category", "compute_type"],
+      "properties": {
+        "name": {"type": "string", "examples": ["LayerNorm", "LeakyReLU"]},
+        "category": {"type": "string", "enum": ["activation", "normalization", "matmul", "conv", "elementwise", "reduction", "attention", "other"]},
+        "compute_type": {"type": "string", "enum": ["memory_bound", "compute_bound", "pipeline_bound", "cube_underutil", "unknown"]}
+      }
+    },
+    "thought": {
+      "type": "object",
+      "description": "本步骤应用的优化经验",
+      "required": ["id", "title", "description", "reason", "opt_layer"],
+      "properties": {
+        "id": {"type": "string", "description": "经验ID"},
+        "title": {"type": "string", "description": "经验标题"},
+        "description": {"type": "string", "description": "做了什么"},
+        "reason": {"type": "string", "description": "为什么这样做"},
+        "opt_layer": {"type": "string", "enum": ["core_partition", "tiling", "pipeline", "instruction", "none"]},
+        "target_bottleneck": {"type": "string"}
+      }
+    },
+    "scene": {
+      "type": "object",
+      "description": "优化场景特征",
+      "required": ["shape_signature", "dtype"],
+      "properties": {
+        "shape_signature": {"type": "string"},
+        "dtype": {"type": "string", "enum": ["float16", "float32", "bfloat16", "int8", "int32"]}
+      }
+    },
+    "effect": {
+      "type": "object",
+      "description": "优化效果",
+      "required": ["label", "step_improvement"],
+      "properties": {
+        "label": {"type": "string", "enum": ["effective", "partial", "ineffective", "negative"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "step_improvement": {"type": "number", "description": "性能提升倍数"}
+      }
+    },
+    "chain": {
+      "type": "object",
+      "description": "优化链路信息",
+      "required": ["session_id", "step_index"],
+      "properties": {
+        "session_id": {"type": "string"},
+        "step_index": {"type": "integer"},
+        "prev_case_id": {"type": ["string", "null"]}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "description": "运行环境信息",
+      "properties": {
+        "device": {"type": "string"},
+        "agent": {"type": "string"},
+        "created_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

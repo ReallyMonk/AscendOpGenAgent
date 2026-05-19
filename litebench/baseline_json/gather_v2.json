@@ -1,0 +1,64 @@
+{
+  "operator_name": "gather_v2",
+  "base_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2/kernel",
+  "files": {
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2/kernel/pybind11.cpp",
+      "size_bytes": 1810,
+      "md5": "d51572020420d97d7d0d205b788efc13",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"gather_v2_tiling.h\"\nextern \"C\" void gather_v2_do_fp16(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\nnamespace gather_v2_ext {\nusing LF=void(*)(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\npybind11::tuple run_gather_v2(const at::Tensor &x, const at::Tensor &indices, int64_t dim) {\n    TORCH_CHECK(dim==0,\"only dim=0 supported\"); TORCH_CHECK(x.dim()==2&&indices.dim()==1,\"shape\");\n    TORCH_CHECK(x.scalar_type()==at::kHalf,\"fp16 only\"); TORCH_CHECK(x.is_contiguous(),\"contiguous\");\n    auto idx=indices.to(at::kInt).contiguous();\n    const auto M=static_cast<int32_t>(idx.sizes()[0]), N=static_cast<int32_t>(x.sizes()[1]);\n    const int32_t mNum=(M+DEFAULT_BLOCK_M-1)/DEFAULT_BLOCK_M;\n    const int32_t uc=std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES,mNum);\n    const int32_t tpc=(mNum+uc-1)/uc;\n    at::Tensor y=at::empty({M,N},x.options());\n    at::Tensor tc=at::empty({static_cast<long>(sizeof(GatherV2KernelTiling))},at::device(at::kCPU).dtype(at::kByte));\n    auto *t=reinterpret_cast<GatherV2KernelTiling*>(tc.data_ptr());\n    t->M=M; t->N=N; t->blockM=DEFAULT_BLOCK_M; t->usedCoreNum=uc; t->tasksPerCore=tpc;\n    auto tn=tc.to(at::kPrivateUse1); auto stm=c10_npu::getCurrentNPUStream().stream(false);\n    gather_v2_do_fp16(uc,stm,\n        static_cast<uint8_t*>(const_cast<void*>(x.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(idx.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(y.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(tn.storage().data())));\n    return pybind11::make_tuple(y);\n}}\nPYBIND11_MODULE(_gather_v2_ext, m) { m.def(\"run_gather_v2\",&gather_v2_ext::run_gather_v2,\"\"); }\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2/kernel/CMakeLists.txt",
+      "size_bytes": 2469,
+      "md5": "5c75c87151f9f92ae18c72601069edb5",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"SOC\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"CANN\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelse()\n    message(FATAL_ERROR \"not found\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC gather_v2_fp16.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _gather_v2_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2/kernel/kernel_common.h",
+      "size_bytes": 314,
+      "md5": "8d51b18371a93ca7124c79bdf6b1637e",
+      "extension": ".h",
+      "content": "#pragma once\n#include <cstdint>\n#include \"kernel_operator.h\"\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *t, GM_ADDR g) {\n    int32_t *d = reinterpret_cast<int32_t *>(t);\n    auto *s = reinterpret_cast<__gm__ int32_t *>(g);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) d[i] = s[i];\n}\n"
+    },
+    "gather_v2_tiling.h": {
+      "path": "gather_v2_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2/kernel/gather_v2_tiling.h",
+      "size_bytes": 299,
+      "md5": "3b7eee18be2257627e4508ee8ac8d606",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef GATHER_V2_TILING_H\n#define GATHER_V2_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct GatherV2KernelTiling { int32_t M; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore; };\n#endif\n"
+    },
+    "gather_v2_kernel.h": {
+      "path": "gather_v2_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2/kernel/gather_v2_kernel.h",
+      "size_bytes": 1693,
+      "md5": "c78ddc03f8ce715d277a78d5d9a6e73b",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef GATHER_V2_KERNEL_H\n#define GATHER_V2_KERNEL_H\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"gather_v2_tiling.h\"\n\ntemplate <typename T>\nclass GatherV2Kernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR x, GM_ADDR idx, GM_ADDR y, GM_ADDR tm, AscendC::TPipe *p) {\n        CopyTiling(&t_, tm);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(x), t_.M * t_.N);\n        idxGM_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(idx), t_.M);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(y), t_.M * t_.N);\n        if ASCEND_IS_AIV { pipe_ = p; sr_ = t_.blockM / AscendC::GetSubBlockNum(); }\n    }\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int ci = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int si = AscendC::GetSubBlockIdx();\n            for (int li = 0; li < t_.tasksPerCore; ++li) {\n                const int bx = ci * t_.tasksPerCore + li; if (bx >= BlockCount()) continue;\n                for (int r = 0; r < sr_; ++r) {\n                    const int ri = bx * t_.blockM + si * sr_ + r; if (ri < t_.M) ProcessRow(ri);\n                }\n            }\n        }\n    }\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (t_.M + t_.blockM - 1) / t_.blockM; }\n    __aicore__ inline void ProcessRow(int32_t ri) {\n        int32_t idx = idxGM_.GetValue(ri);\n        for (int32_t j = 0; j < t_.N; ++j)\n            yGM_.SetValue(ri * t_.N + j, xGM_.GetValue(idx * t_.N + j));\n    }\nprivate:\n    GatherV2KernelTiling t_{}; AscendC::TPipe *pipe_{}; int sr_{};\n    AscendC::GlobalTensor<T> xGM_, yGM_;\n    AscendC::GlobalTensor<int32_t> idxGM_;\n};\n#endif\n"
+    },
+    "gather_v2_fp16.cpp": {
+      "path": "gather_v2_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gather_v2/kernel/gather_v2_fp16.cpp",
+      "size_bytes": 430,
+      "md5": "af0665a981e9a4e40f7f66667363f0c5",
+      "extension": ".cpp",
+      "content": "#include \"gather_v2_kernel.h\"\nextern \"C\" __global__ __aicore__ void gather_v2_custom_fp16(GM_ADDR x,GM_ADDR idx,GM_ADDR y,GM_ADDR t){\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    GatherV2Kernel<half> k; k.Init(x,idx,y,t,&p); k.Process();\n}\nextern \"C\" void gather_v2_do_fp16(uint32_t d,void* s,uint8_t* x,uint8_t* idx,uint8_t* y,uint8_t* t){\n    gather_v2_custom_fp16<<<d,nullptr,s>>>(x,idx,y,t);\n}\n"
+    }
+  },
+  "metadata": {
+    "total_files": 6,
+    "total_size_bytes": 7015,
+    "file_types": {
+      ".cpp": 2,
+      ".txt": 1,
+      ".h": 3
+    }
+  }
+}

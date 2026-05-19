@@ -1,0 +1,64 @@
+{
+  "operator_name": "mat_mul_v3",
+  "base_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3/kernel",
+  "files": {
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3/kernel/pybind11.cpp",
+      "size_bytes": 1787,
+      "md5": "82cd0c485f6259658e8ecf6bd4de55df",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"mm_tiling.h\"\nextern \"C\" void mm_do_fp16(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\nnamespace mm_ext {\nusing LF=void(*)(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\npybind11::tuple run_mat_mul_v3(const at::Tensor &a, const at::Tensor &b) {\n    TORCH_CHECK(a.dim()==2&&b.dim()==2,\"must be [M,K] and [K,N]\");\n    TORCH_CHECK(a.scalar_type()==at::kHalf,\"fp16 only\"); TORCH_CHECK(a.sizes()[1]==b.sizes()[0],\"K mismatch\");\n    TORCH_CHECK(a.is_contiguous()&&b.is_contiguous(),\"must be contiguous\");\n    const auto M=static_cast<int32_t>(a.sizes()[0]), K=static_cast<int32_t>(a.sizes()[1]), N=static_cast<int32_t>(b.sizes()[1]);\n    const int32_t mNum=(M+DEFAULT_BLOCK_M-1)/DEFAULT_BLOCK_M;\n    const int32_t uc=std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES,mNum);\n    const int32_t tpc=(mNum+uc-1)/uc;\n    at::Tensor c=at::empty({M,N},a.options());\n    at::Tensor tc=at::empty({static_cast<long>(sizeof(MMKernelTiling))},at::device(at::kCPU).dtype(at::kByte));\n    auto *t=reinterpret_cast<MMKernelTiling*>(tc.data_ptr());\n    t->M=M; t->K=K; t->N=N; t->blockM=DEFAULT_BLOCK_M; t->usedCoreNum=uc; t->tasksPerCore=tpc;\n    auto tn=tc.to(at::kPrivateUse1); auto stm=c10_npu::getCurrentNPUStream().stream(false);\n    mm_do_fp16(uc,stm,\n        static_cast<uint8_t*>(const_cast<void*>(a.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(b.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(c.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(tn.storage().data())));\n    return pybind11::make_tuple(c);\n}}\nPYBIND11_MODULE(_mm_ext, m) { m.def(\"run_mat_mul_v3\",&mm_ext::run_mat_mul_v3,\"\"); }\n"
+    },
+    "mm_fp16.cpp": {
+      "path": "mm_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3/kernel/mm_fp16.cpp",
+      "size_bytes": 388,
+      "md5": "c6defe1fa5d5424ea5cb1e43509bff64",
+      "extension": ".cpp",
+      "content": "#include \"mm_kernel.h\"\nextern \"C\" __global__ __aicore__ void mm_custom_fp16(GM_ADDR a,GM_ADDR b,GM_ADDR c,GM_ADDR t){\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    MMKernel<half> k; k.Init(a,b,c,t,&p); k.Process();\n}\nextern \"C\" void mm_do_fp16(uint32_t d,void* s,uint8_t* a,uint8_t* b,uint8_t* c,uint8_t* t){\n    mm_custom_fp16<<<d,nullptr,s>>>(a,b,c,t);\n}\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3/kernel/CMakeLists.txt",
+      "size_bytes": 2455,
+      "md5": "3b089d9c0457a7a324a7119efa7f3e78",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"SOC\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"CANN\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelse()\n    message(FATAL_ERROR \"not found\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC mm_fp16.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _mm_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3/kernel/kernel_common.h",
+      "size_bytes": 314,
+      "md5": "8d51b18371a93ca7124c79bdf6b1637e",
+      "extension": ".h",
+      "content": "#pragma once\n#include <cstdint>\n#include \"kernel_operator.h\"\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *t, GM_ADDR g) {\n    int32_t *d = reinterpret_cast<int32_t *>(t);\n    auto *s = reinterpret_cast<__gm__ int32_t *>(g);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) d[i] = s[i];\n}\n"
+    },
+    "mm_kernel.h": {
+      "path": "mm_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3/kernel/mm_kernel.h",
+      "size_bytes": 1785,
+      "md5": "4a19ac4208eb1a0b84758261f899ab8f",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef MM_KERNEL_H\n#define MM_KERNEL_H\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"mm_tiling.h\"\n\ntemplate <typename T>\nclass MMKernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR a, GM_ADDR b, GM_ADDR c, GM_ADDR tm, AscendC::TPipe *p) {\n        CopyTiling(&t_, tm);\n        aGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(a), t_.M * t_.K);\n        bGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(b), t_.K * t_.N);\n        cGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(c), t_.M * t_.N);\n        if ASCEND_IS_AIV { pipe_ = p; sr_ = t_.blockM / AscendC::GetSubBlockNum(); }\n    }\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int ci=AscendC::GetBlockIdx()/AscendC::GetSubBlockNum();\n            const int si=AscendC::GetSubBlockIdx();\n            for(int li=0;li<t_.tasksPerCore;++li){\n                const int bx=ci*t_.tasksPerCore+li; if(bx>=BlockCount()) continue;\n                for(int r=0;r<sr_;++r){\n                    const int ri=bx*t_.blockM+si*sr_+r; if(ri<t_.M) ProcessRow(ri);\n                }\n            }\n        }\n    }\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (t_.M + t_.blockM - 1) / t_.blockM; }\n    __aicore__ inline void ProcessRow(int32_t row) {\n        for (int32_t col = 0; col < t_.N; ++col) {\n            float sum = 0.0f;\n            for (int32_t k = 0; k < t_.K; ++k) {\n                sum += static_cast<float>(aGM_.GetValue(row * t_.K + k)) *\n                       static_cast<float>(bGM_.GetValue(k * t_.N + col));\n            }\n            cGM_.SetValue(row * t_.N + col, static_cast<T>(sum));\n        }\n    }\nprivate:\n    MMKernelTiling t_{}; AscendC::TPipe *pipe_{}; int sr_{};\n    AscendC::GlobalTensor<T> aGM_, bGM_, cGM_;\n};\n#endif\n"
+    },
+    "mm_tiling.h": {
+      "path": "mm_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/mat_mul_v3/kernel/mm_tiling.h",
+      "size_bytes": 290,
+      "md5": "927c925e5f1aaa9a24d998bd5edc0d32",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef MM_TILING_H\n#define MM_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct MMKernelTiling { int32_t M; int32_t K; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore; };\n#endif\n"
+    }
+  },
+  "metadata": {
+    "total_files": 6,
+    "total_size_bytes": 7019,
+    "file_types": {
+      ".cpp": 2,
+      ".txt": 1,
+      ".h": 3
+    }
+  }
+}

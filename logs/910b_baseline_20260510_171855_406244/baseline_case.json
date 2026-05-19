@@ -1,0 +1,1 @@
+{"op_name": "relu", "shape_id": "S1", "api": "torch.nn.functional.relu", "runner_type": "torch_api", "input_builder": "unary_2d", "attrs": {}, "shape_params": {"B_S": 1024, "H": 1024}, "inputs": {"x": {"shape": [1024, 1024], "dtype": "float16", "distribution": "normal", "low": null, "high": null, "threshold": null}}}

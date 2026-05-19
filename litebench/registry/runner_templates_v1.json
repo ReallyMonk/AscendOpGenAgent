@@ -1,0 +1,598 @@
+{
+  "version": "1.1.0",
+  "description": "Runner templates for foundation, fusion, and challenge benchmark operators.",
+  "templates": {
+    "gelu": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.gelu",
+      "input_builder": "unary_2d",
+      "attrs": {},
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "relu": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.relu",
+      "input_builder": "unary_2d",
+      "attrs": {},
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "layer_norm_v3": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.layer_norm",
+      "input_builder": "layer_norm_2d",
+      "attrs": {
+        "eps": 1e-05
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": true,
+      "case_signature": {
+        "primary_input": "x",
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "weight": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "ones"
+        },
+        "bias": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "zeros"
+        }
+      }
+    },
+    "rms_norm": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_rms_norm",
+      "input_builder": "rms_norm_2d",
+      "attrs": {
+        "eps": 1e-05
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "weight": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "ones"
+        }
+      }
+    },
+    "mat_mul_v3": {
+      "runner_type": "torch_api",
+      "api": "torch.matmul",
+      "input_builder": "matmul_2d",
+      "attrs": {},
+      "profiling_supported": true,
+      "supports_custom_remote": true,
+      "case_signature": {
+        "shape_params": ["M", "K", "N"]
+      },
+      "inputs": {
+        "a": {
+          "shape": ["M", "K"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "b": {
+          "shape": ["K", "N"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "batch_mat_mul_v3": {
+      "runner_type": "torch_api",
+      "api": "torch.bmm",
+      "input_builder": "bmm_3d",
+      "attrs": {},
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B", "M", "K", "N"]
+      },
+      "inputs": {
+        "a": {
+          "shape": ["B", "M", "K"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "b": {
+          "shape": ["B", "K", "N"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "conv2d_v2": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.conv2d",
+      "input_builder": "conv2d_nchw",
+      "attrs": {},
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["N", "Ci", "Co", "H", "W", "Kh", "Kw", "stride", "padding"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["N", "Ci", "H", "W"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "weight": {
+          "shape": ["Co", "Ci", "Kh", "Kw"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "avg_pool2d": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.avg_pool2d",
+      "input_builder": "avg_pool2d_4d",
+      "attrs": {
+        "padding": 0
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": true,
+      "case_signature": {
+        "shape_params": ["N", "C", "H", "W", "kernel", "stride"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["N", "C", "H", "W"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "gather_v2": {
+      "runner_type": "torch_api",
+      "api": "torch.gather",
+      "input_builder": "gather_rows_2d",
+      "attrs": {
+        "dim": 0
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["rows", "dim", "num_indices"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["rows", "dim"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "index": {
+          "shape": ["num_indices", "dim"],
+          "dtype": "int64",
+          "distribution": "randint",
+          "low": 0,
+          "high_from_param": "rows"
+        }
+      }
+    },
+    "embedding_bag": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.embedding_bag",
+      "input_builder": "embedding_bag_2d",
+      "attrs": {
+        "mode": "sum",
+        "include_last_offset": false
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["vocab", "dim", "num_indices", "num_bags"]
+      },
+      "inputs": {
+        "weight": {
+          "shape": ["vocab", "dim"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "indices": {
+          "shape": ["num_indices"],
+          "dtype": "int64",
+          "distribution": "randint",
+          "low": 0,
+          "high_from_param": "vocab"
+        },
+        "offsets": {
+          "shape": ["num_bags"],
+          "dtype": "int64",
+          "distribution": "zeros"
+        }
+      }
+    },
+    "add_layer_norm": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_add_layer_norm",
+      "input_builder": "add_layer_norm_2d",
+      "attrs": {
+        "eps": 1e-05
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": true,
+      "case_signature": {
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x1": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "x2": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "gamma": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "ones"
+        },
+        "beta": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "zeros"
+        }
+      }
+    },
+    "add_rms_norm": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_add_rms_norm",
+      "input_builder": "add_rms_norm_2d",
+      "attrs": {
+        "eps": 1e-05
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x1": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "x2": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "gamma": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "ones"
+        }
+      }
+    },
+    "gelu_mul": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "benchmark_composite.gelu_mul",
+      "input_builder": "gated_2d",
+      "attrs": {
+        "dim": -1
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "two_inter"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "two_inter"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "ge_glu_v2": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_geglu",
+      "input_builder": "gated_2d",
+      "attrs": {
+        "dim": -1
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "two_inter"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "two_inter"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "softmax_v2": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.softmax",
+      "input_builder": "softmax_4d",
+      "attrs": {
+        "dim": -1
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": true,
+      "case_signature": {
+        "shape_params": ["B", "heads", "S"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B", "heads", "S", "S"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "cross_entropy_loss": {
+      "runner_type": "torch_api",
+      "api": "torch.nn.functional.cross_entropy",
+      "input_builder": "cross_entropy_2d",
+      "attrs": {},
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "V"]
+      },
+      "inputs": {
+        "logits": {
+          "shape": ["B_S", "V"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "target": {
+          "shape": ["B_S"],
+          "dtype": "int64",
+          "distribution": "randint",
+          "low": 0,
+          "high_from_param": "V"
+        }
+      }
+    },
+    "swi_glu": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_swiglu",
+      "input_builder": "swiglu_2d",
+      "attrs": {
+        "dim": -1
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": true,
+      "case_signature": {
+        "shape_params": ["B_S", "two_inter"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "two_inter"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "clipped_swiglu": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_swiglu",
+      "input_builder": "swiglu_2d",
+      "attrs": {
+        "dim": -1
+      },
+      "profiling_supported": false,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "two_inter"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B_S", "two_inter"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "masked_softmax_with_rel_pos_bias": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_masked_softmax_with_rel_pos_bias",
+      "input_builder": "masked_softmax_with_rel_pos_bias",
+      "attrs": {
+        "scale_value": 1.0,
+        "inner_precise": 0
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B", "W", "N", "S1", "S2"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B", "N", "S1", "S2"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "atten_mask": {
+          "shape": ["B", "1", "S1", "S2"],
+          "dtype": "bool",
+          "distribution": "bool_bernoulli",
+          "threshold": 0.15
+        },
+        "relative_pos_bias": {
+          "shape": ["1", "N", "S1", "S2"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    },
+    "scaled_masked_softmax_v2": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_scaled_masked_softmax",
+      "input_builder": "scaled_masked_softmax",
+      "attrs": {
+        "scale": 0.125,
+        "fixed_triu_mask": false
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B", "N", "S"]
+      },
+      "inputs": {
+        "x": {
+          "shape": ["B", "N", "S", "S"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "mask": {
+          "shape": ["B", "1", "S", "S"],
+          "dtype": "bool",
+          "distribution": "bool_bernoulli",
+          "threshold": 0.2
+        }
+      }
+    },
+    "add_rms_norm_quant": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_add_rms_norm_quant",
+      "input_builder": "add_rms_norm_quant_2d",
+      "attrs": {
+        "eps": 1e-05,
+        "axis": -1,
+        "div_mode": true
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x1": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "x2": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "gamma": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "ones"
+        },
+        "scales1": {
+          "shape": [1],
+          "dtype": "float32",
+          "distribution": "ones"
+        }
+      }
+    },
+    "add_rms_norm_dynamic_quant": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_add_rms_norm_dynamic_quant",
+      "input_builder": "add_rms_norm_dynamic_quant_2d",
+      "attrs": {
+        "eps": 1e-05
+      },
+      "profiling_supported": true,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B_S", "H"]
+      },
+      "inputs": {
+        "x1": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "x2": {
+          "shape": ["B_S", "H"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "gamma": {
+          "shape": ["H"],
+          "dtype_from_case": true,
+          "distribution": "ones"
+        }
+      }
+    },
+    "flash_attention_score": {
+      "runner_type": "torch_npu_custom_api",
+      "api": "torch_npu.npu_fusion_attention",
+      "input_builder": "fusion_attention_bsnd",
+      "attrs": {
+        "input_layout": "BSND",
+        "scale": 0.08838834764831845,
+        "keep_prob": 1.0,
+        "pre_tockens": 2147483647,
+        "next_tockens": 2147483647,
+        "sparse_mode": 0
+      },
+      "profiling_supported": false,
+      "supports_custom_remote": false,
+      "case_signature": {
+        "shape_params": ["B", "S", "S_kv", "num_heads", "num_kv_heads", "head_dim"]
+      },
+      "inputs": {
+        "query": {
+          "shape": ["B", "S", "num_heads", "head_dim"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "key": {
+          "shape": ["B", "S_kv", "num_kv_heads", "head_dim"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        },
+        "value": {
+          "shape": ["B", "S_kv", "num_kv_heads", "head_dim"],
+          "dtype_from_case": true,
+          "distribution": "normal"
+        }
+      }
+    }
+  }
+}

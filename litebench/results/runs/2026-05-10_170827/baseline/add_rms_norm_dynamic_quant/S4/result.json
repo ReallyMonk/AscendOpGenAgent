@@ -1,0 +1,23 @@
+{
+  "mode": "baseline",
+  "source": "measured",
+  "cache_key": "02634807ab55f64e",
+  "server_name": "910b",
+  "hardware": "Ascend910B",
+  "device": "7",
+  "op_name": "add_rms_norm_dynamic_quant",
+  "shape_id": "S4",
+  "dtype": "float16",
+  "status": "failed",
+  "correctness": "not_checked",
+  "e2e_median_ms": "",
+  "e2e_p95_ms": "",
+  "warmup": 20,
+  "repeat": 100,
+  "profiling_enabled": false,
+  "worker_url": "http://127.0.0.1:9027",
+  "remote_stage": "baseline_runner",
+  "remote_log_dir": "logs/910b_baseline_20260510_171910_900221",
+  "remote_error": "Traceback (most recent call last):\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 265, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 259, in main\n    result = run_case(case, args.device_id, args.warmup, args.repeat, profiling=args.profiling)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 226, in run_case\n    timing = _run_e2e(fn, args, kwargs, warmup, repeat)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hrl-kope/AscendOpGenAgent/litebench/remote/baseline_benchmark_runner.py\", line 168, in _run_e2e\n    _ = fn(*args, **kwargs)\n        ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.11.14/lib/python3.11/site-packages/torch/_ops.py\", line 1255, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: npu::npu_add_rms_norm_dynamic_quant() takes 3 positional argument(s) but 4 was/were given.  Declaration: npu::npu_add_rms_norm_dynamic_quant(Tensor x1, Tensor x2, Tensor gamma, *, Tensor? smooth_scale1=None, Tensor? smooth_scale2=None, Tensor? beta=None, float epsilon=9.9999999999999995e-07, bool[2] output_mask=[]) -> (Tensor, Tensor, Tensor, Tensor, Tensor)\n",
+  "created_at": "2026-05-10T17:19:25.270361"
+}

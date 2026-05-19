@@ -1,0 +1,20 @@
+{
+  "profiling_available": true,
+  "timing": {
+    "ref_median_ms": 0.3179,
+    "custom_median_ms": 0.4296,
+    "speedup": 0.7401
+  },
+  "profiling": {
+    "task_duration_us": 204.98,
+    "aiv_time_us": 190.247,
+    "aiv_vec_ratio": 0.3071,
+    "aiv_scalar_ratio": 0.2089,
+    "aiv_mte2_ratio": 0.539,
+    "aiv_mte3_ratio": 0.1956,
+    "aiv_icache_miss_rate": 0.0089,
+    "op_name": "scaled_masked_softmax_v2",
+    "Profiling data saved to": "/home/hrl-kope/OpenOps/evo_res/optimization_queue/scaled_masked_softmax_v2/output/scaled_masked_softmax_v2/profiling_round_11.json"
+  },
+  "error": ""
+}

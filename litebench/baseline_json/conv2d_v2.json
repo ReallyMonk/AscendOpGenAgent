@@ -1,0 +1,64 @@
+{
+  "operator_name": "conv2d_v2",
+  "base_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2/kernel",
+  "files": {
+    "conv2d_fp16.cpp": {
+      "path": "conv2d_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2/kernel/conv2d_fp16.cpp",
+      "size_bytes": 433,
+      "md5": "c11325d4c74071627303d22773f0142a",
+      "extension": ".cpp",
+      "content": "#include \"conv2d_kernel.h\"\nextern \"C\" __global__ __aicore__ void conv2d_custom_fp16(GM_ADDR x,GM_ADDR w,GM_ADDR b,GM_ADDR y,GM_ADDR t){\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    Conv2dKernel<half> k; k.Init(x,w,b,y,t,&p); k.Process();\n}\nextern \"C\" void conv2d_do_fp16(uint32_t d,void* s,uint8_t* x,uint8_t* w,uint8_t* b,uint8_t* y,uint8_t* t){\n    conv2d_custom_fp16<<<d,nullptr,s>>>(x,w,b,y,t);\n}\n"
+    },
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2/kernel/pybind11.cpp",
+      "size_bytes": 2272,
+      "md5": "c2a9e68ee503d4fcaf8344272991145a",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"conv2d_tiling.h\"\nextern \"C\" void conv2d_do_fp16(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\nnamespace conv2d_ext {\nusing LF=void(*)(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\npybind11::tuple run_conv2d_v2(const at::Tensor &x, const at::Tensor &w, const at::Tensor &bias, int64_t stride, int64_t pad) {\n    TORCH_CHECK(stride==1&&pad==1,\"only s=1,p=1 supported\"); TORCH_CHECK(x.dim()==4&&w.dim()==4,\"[N,C,H,W]\");\n    TORCH_CHECK(x.scalar_type()==at::kHalf,\"fp16 only\"); TORCH_CHECK(x.is_contiguous(),\"contiguous\");\n    const auto N=x.sizes()[0], Ci=x.sizes()[1], H=x.sizes()[2], W=x.sizes()[3];\n    const auto Co=w.sizes()[0], Kh=w.sizes()[2], Kw=w.sizes()[3];\n    const auto M=static_cast<int32_t>(N*Co*H);\n    const int32_t mNum=(M+DEFAULT_BLOCK_M-1)/DEFAULT_BLOCK_M;\n    const int32_t uc=std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES,mNum);\n    const int32_t tpc=(mNum+uc-1)/uc;\n    at::Tensor y=at::empty({N,Co,H,W},x.options());\n    at::Tensor tc=at::empty({sizeof(Conv2dKernelTiling)},at::device(at::kCPU).dtype(at::kByte));\n    auto *t=reinterpret_cast<Conv2dKernelTiling*>(tc.data_ptr());\n    t->M=M; t->N=static_cast<int32_t>(W); t->blockM=DEFAULT_BLOCK_M; t->usedCoreNum=uc; t->tasksPerCore=tpc;\n    t->Ci=static_cast<int32_t>(Ci); t->Co=static_cast<int32_t>(Co); t->H=static_cast<int32_t>(H); t->W=static_cast<int32_t>(W);\n    t->Kh=static_cast<int32_t>(Kh); t->Kw=static_cast<int32_t>(Kw);\n    t->inTotal=static_cast<int32_t>(N*Ci*H*W); t->outTotal=static_cast<int32_t>(N*Co*H*W);\n    auto tn=tc.to(at::kPrivateUse1); auto stm=c10_npu::getCurrentNPUStream().stream(false);\n    conv2d_do_fp16(uc,stm,\n        static_cast<uint8_t*>(const_cast<void*>(x.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(w.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(bias.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(y.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(tn.storage().data())));\n    return pybind11::make_tuple(y);\n}}\nPYBIND11_MODULE(_conv2d_v2_ext, m) { m.def(\"run_conv2d_v2\",&conv2d_ext::run_conv2d_v2,\"\"); }\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2/kernel/CMakeLists.txt",
+      "size_bytes": 2466,
+      "md5": "33ac557b656b461d387a58029ae89ea7",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"SOC\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"CANN\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelse()\n    message(FATAL_ERROR \"not found\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC conv2d_fp16.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _conv2d_v2_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2/kernel/kernel_common.h",
+      "size_bytes": 314,
+      "md5": "8d51b18371a93ca7124c79bdf6b1637e",
+      "extension": ".h",
+      "content": "#pragma once\n#include <cstdint>\n#include \"kernel_operator.h\"\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *t, GM_ADDR g) {\n    int32_t *d = reinterpret_cast<int32_t *>(t);\n    auto *s = reinterpret_cast<__gm__ int32_t *>(g);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) d[i] = s[i];\n}\n"
+    },
+    "conv2d_tiling.h": {
+      "path": "conv2d_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2/kernel/conv2d_tiling.h",
+      "size_bytes": 400,
+      "md5": "b3053bafc9a7a20d37eaab9d9ec58d32",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef CONV2D_TILING_H\n#define CONV2D_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct Conv2dKernelTiling { int32_t M; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore;\n    int32_t Ci; int32_t Co; int32_t H; int32_t W; int32_t Kh; int32_t Kw; int32_t inTotal; int32_t outTotal; };\n#endif\n"
+    },
+    "conv2d_kernel.h": {
+      "path": "conv2d_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/conv2d_v2/kernel/conv2d_kernel.h",
+      "size_bytes": 2808,
+      "md5": "c0128ef1b50e55a3643215a3967bcd9a",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef CONV2D_KERNEL_H\n#define CONV2D_KERNEL_H\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"conv2d_tiling.h\"\n\ntemplate <typename T>\nclass Conv2dKernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR x, GM_ADDR w, GM_ADDR b, GM_ADDR y, GM_ADDR tm, AscendC::TPipe *p) {\n        CopyTiling(&t_, tm);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(x), t_.inTotal);\n        wGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(w), t_.Co * t_.Ci * t_.Kh * t_.Kw);\n        bGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(b), t_.Co);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(y), t_.outTotal);\n        if ASCEND_IS_AIV { pipe_ = p; sr_ = t_.blockM / AscendC::GetSubBlockNum(); }\n    }\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int ci = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int si = AscendC::GetSubBlockIdx();\n            for (int li = 0; li < t_.tasksPerCore; ++li) {\n                const int bx = ci * t_.tasksPerCore + li; if (bx >= BlockCount()) continue;\n                for (int r = 0; r < sr_; ++r) {\n                    const int ri = bx * t_.blockM + si * sr_ + r; if (ri < t_.M) ProcessRow(ri);\n                }\n            }\n        }\n    }\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (t_.M + t_.blockM - 1) / t_.blockM; }\n    __aicore__ inline void ProcessRow(int32_t ri) {\n        // ri = n * Co * H + co * H + h\n        int32_t n = ri / (t_.Co * t_.H);\n        int32_t co = (ri / t_.H) % t_.Co;\n        int32_t h = ri % t_.H;\n        int32_t inBase = n * t_.Ci * t_.H * t_.W;\n        int32_t outBase = (n * t_.Co + co) * t_.H * t_.W + h * t_.W;\n\n        for (int32_t ow = 0; ow < t_.W; ++ow) {\n            float sum = static_cast<float>(bGM_.GetValue(co));\n            for (int32_t ci = 0; ci < t_.Ci; ++ci) {\n                for (int32_t kh = 0; kh < t_.Kh; ++kh) {\n                    int32_t ih = h + kh - 1; // padding=1 offset\n                    if (ih < 0 || ih >= t_.H) continue;\n                    for (int32_t kw = 0; kw < t_.Kw; ++kw) {\n                        int32_t iw = ow + kw - 1;\n                        if (iw < 0 || iw >= t_.W) continue;\n                        int32_t xi = inBase + ci * t_.H * t_.W + ih * t_.W + iw;\n                        int32_t wi = (co * t_.Ci + ci) * t_.Kh * t_.Kw + kh * t_.Kw + kw;\n                        sum += static_cast<float>(xGM_.GetValue(xi)) *\n                               static_cast<float>(wGM_.GetValue(wi));\n                    }\n                }\n            }\n            yGM_.SetValue(outBase + ow, static_cast<T>(sum));\n        }\n    }\nprivate:\n    Conv2dKernelTiling t_{}; AscendC::TPipe *pipe_{}; int sr_{};\n    AscendC::GlobalTensor<T> xGM_, wGM_, bGM_, yGM_;\n};\n#endif\n"
+    }
+  },
+  "metadata": {
+    "total_files": 6,
+    "total_size_bytes": 8693,
+    "file_types": {
+      ".cpp": 2,
+      ".txt": 1,
+      ".h": 3
+    }
+  }
+}

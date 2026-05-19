@@ -1,0 +1,264 @@
+=========================================
+OpenOps Remote Worker Server
+=========================================
+CANN Path: /usr/local/Ascend/cann-8.5.0
+Host: 0.0.0.0
+Port: 9027
+Log Directory: /home/hrl-kope/AscendOpGenAgent/logs
+Max Workers: 1
+NPU Devices: 7
+=========================================
+2026-05-11 19:57:40,517 - __main__ - INFO - Starting OpenOps Worker Server on 0.0.0.0:9027
+2026-05-11 19:57:40,517 - __main__ - INFO - Using NPU devices: [7]
+INFO:     Started server process [1013254]
+INFO:     Waiting for application startup.
+2026-05-11 19:57:40,590 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+2026-05-11 19:57:40,590 - __main__ - INFO - Initialized device pool with devices: [7]
+2026-05-11 19:57:40,590 - __main__ - INFO - OpenOps Worker Server initialized
+2026-05-11 19:57:40,590 - __main__ - INFO - Log directory: /home/hrl-kope/AscendOpGenAgent/logs
+2026-05-11 19:57:40,590 - __main__ - INFO - Max concurrent workers: 1
+2026-05-11 19:57:40,590 - __main__ - INFO - Available devices: [7]
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:9027 (Press CTRL+C to quit)
+2026-05-11 19:57:42,658 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:41246 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 19:57:56,547 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:45036 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45052 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 19:57:56,726 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:45064 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 19:57:56,815 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Acquired processing slot. Active requests: 1
+2026-05-11 19:57:56,815 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Received package: 81920 bytes
+2026-05-11 19:57:56,816 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_195756_816184
+2026-05-11 19:57:56,816 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 19:57:56,816 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Using device: 7
+2026-05-11 19:57:56,825 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_hgkupv0c/extract
+2026-05-11 19:57:56,826 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 19:57:56,826 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Found project directory: GeluMulCustom
+2026-05-11 19:57:56,826 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Running build script...
+2026-05-11 19:57:56,826 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_hgkupv0c/extract/GeluMulCustom
+2026-05-11 19:57:57,964 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_195756] Build failed
+2026-05-11 19:57:57,964 - __main__ - INFO - Released device: 7
+2026-05-11 19:57:57,964 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Released device: 7
+2026-05-11 19:57:57,967 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_195756] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:45074 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:16:12,206 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:38676 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38680 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:16:12,382 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:38682 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:16:12,469 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Acquired processing slot. Active requests: 1
+2026-05-11 20:16:12,469 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Received package: 81920 bytes
+2026-05-11 20:16:12,471 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_201612_470733
+2026-05-11 20:16:12,471 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:16:12,471 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Using device: 7
+2026-05-11 20:16:12,481 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_qa259e38/extract
+2026-05-11 20:16:12,481 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:16:12,482 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Found project directory: GeluMulCustom
+2026-05-11 20:16:12,482 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Running build script...
+2026-05-11 20:16:12,482 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_qa259e38/extract/GeluMulCustom
+2026-05-11 20:16:13,603 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_201612] Build failed
+2026-05-11 20:16:13,603 - __main__ - INFO - Released device: 7
+2026-05-11 20:16:13,603 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Released device: 7
+2026-05-11 20:16:13,606 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_201612] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:38684 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:21:41,979 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:50030 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50032 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:21:42,164 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:50040 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:21:42,257 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Acquired processing slot. Active requests: 1
+2026-05-11 20:21:42,257 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Received package: 81920 bytes
+2026-05-11 20:21:42,258 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_202142_258336
+2026-05-11 20:21:42,259 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:21:42,259 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Using device: 7
+2026-05-11 20:21:42,266 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_syenshot/extract
+2026-05-11 20:21:42,267 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:21:42,267 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Found project directory: GeluMulCustom
+2026-05-11 20:21:42,267 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Running build script...
+2026-05-11 20:21:42,267 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_syenshot/extract/GeluMulCustom
+2026-05-11 20:21:43,334 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_202142] Build failed
+2026-05-11 20:21:43,334 - __main__ - INFO - Released device: 7
+2026-05-11 20:21:43,334 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Released device: 7
+2026-05-11 20:21:43,337 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202142] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:50044 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:27:58,714 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:43302 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43310 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:27:58,894 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:58732 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:27:58,986 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Acquired processing slot. Active requests: 1
+2026-05-11 20:27:58,986 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Received package: 81920 bytes
+2026-05-11 20:27:58,988 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_202758_987615
+2026-05-11 20:27:58,988 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:27:58,988 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Using device: 7
+2026-05-11 20:27:58,995 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_3eguci1e/extract
+2026-05-11 20:27:58,996 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:27:58,996 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Found project directory: GeluMulCustom
+2026-05-11 20:27:58,996 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Running build script...
+2026-05-11 20:27:58,996 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_3eguci1e/extract/GeluMulCustom
+2026-05-11 20:28:00,369 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_202758] Build failed
+2026-05-11 20:28:00,369 - __main__ - INFO - Released device: 7
+2026-05-11 20:28:00,370 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Released device: 7
+2026-05-11 20:28:00,373 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202758] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:58738 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:29:02,606 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:47846 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47860 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:29:02,779 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:47866 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:29:02,865 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Acquired processing slot. Active requests: 1
+2026-05-11 20:29:02,865 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Received package: 81920 bytes
+2026-05-11 20:29:02,866 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_202902_865872
+2026-05-11 20:29:02,866 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:29:02,866 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Using device: 7
+2026-05-11 20:29:02,874 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_5ucfdl5p/extract
+2026-05-11 20:29:02,874 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:29:02,874 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Found project directory: GeluMulCustom
+2026-05-11 20:29:02,874 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Running build script...
+2026-05-11 20:29:02,874 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_5ucfdl5p/extract/GeluMulCustom
+2026-05-11 20:29:06,214 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_202902] Build failed
+2026-05-11 20:29:06,214 - __main__ - INFO - Released device: 7
+2026-05-11 20:29:06,214 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Released device: 7
+2026-05-11 20:29:06,218 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_202902] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:47874 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:30:12,035 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:46710 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46722 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:30:12,218 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:46724 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:30:12,308 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Acquired processing slot. Active requests: 1
+2026-05-11 20:30:12,308 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Received package: 81920 bytes
+2026-05-11 20:30:12,309 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_203012_309231
+2026-05-11 20:30:12,309 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:30:12,310 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Using device: 7
+2026-05-11 20:30:12,317 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_yp0o_h2y/extract
+2026-05-11 20:30:12,317 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:30:12,318 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Found project directory: GeluMulCustom
+2026-05-11 20:30:12,318 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Running build script...
+2026-05-11 20:30:12,318 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_yp0o_h2y/extract/GeluMulCustom
+2026-05-11 20:30:15,663 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_203012] Build failed
+2026-05-11 20:30:15,663 - __main__ - INFO - Released device: 7
+2026-05-11 20:30:15,663 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Released device: 7
+2026-05-11 20:30:15,667 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203012] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:46740 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:30:57,015 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:36102 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36112 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:30:57,192 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:36116 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:30:57,280 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Acquired processing slot. Active requests: 1
+2026-05-11 20:30:57,280 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Received package: 81920 bytes
+2026-05-11 20:30:57,281 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_203057_281306
+2026-05-11 20:30:57,282 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:30:57,282 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Using device: 7
+2026-05-11 20:30:57,289 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_ibsncq7_/extract
+2026-05-11 20:30:57,289 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:30:57,290 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Found project directory: GeluMulCustom
+2026-05-11 20:30:57,290 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Running build script...
+2026-05-11 20:30:57,290 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_ibsncq7_/extract/GeluMulCustom
+2026-05-11 20:31:00,654 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_203057] Build failed
+2026-05-11 20:31:00,654 - __main__ - INFO - Released device: 7
+2026-05-11 20:31:00,654 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Released device: 7
+2026-05-11 20:31:00,657 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203057] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:36128 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:31:41,222 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:46098 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46102 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:31:41,399 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:46108 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:31:41,487 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Acquired processing slot. Active requests: 1
+2026-05-11 20:31:41,487 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Received package: 81920 bytes
+2026-05-11 20:31:41,488 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_203141_488543
+2026-05-11 20:31:41,489 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:31:41,489 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Using device: 7
+2026-05-11 20:31:41,496 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_k64n6hdx/extract
+2026-05-11 20:31:41,497 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:31:41,497 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Found project directory: GeluMulCustom
+2026-05-11 20:31:41,497 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Running build script...
+2026-05-11 20:31:41,497 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_k64n6hdx/extract/GeluMulCustom
+2026-05-11 20:31:45,004 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_203141] Build failed
+2026-05-11 20:31:45,006 - __main__ - INFO - Released device: 7
+2026-05-11 20:31:45,006 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Released device: 7
+2026-05-11 20:31:45,012 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203141] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:46122 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:32:25,059 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:46770 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46782 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:32:25,228 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:46788 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:32:25,311 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Acquired processing slot. Active requests: 1
+2026-05-11 20:32:25,311 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Received package: 81920 bytes
+2026-05-11 20:32:25,312 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_203225_312333
+2026-05-11 20:32:25,312 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:32:25,312 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Using device: 7
+2026-05-11 20:32:25,320 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_ovih_b9s/extract
+2026-05-11 20:32:25,320 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:32:25,320 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Found project directory: GeluMulCustom
+2026-05-11 20:32:25,321 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Running build script...
+2026-05-11 20:32:25,321 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_ovih_b9s/extract/GeluMulCustom
+2026-05-11 20:32:28,831 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_203225] Build failed
+2026-05-11 20:32:28,831 - __main__ - INFO - Released device: 7
+2026-05-11 20:32:28,831 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Released device: 7
+2026-05-11 20:32:28,835 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203225] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:46802 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:33:21,337 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:33870 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33884 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:33:21,508 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:33888 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:33:21,593 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Acquired processing slot. Active requests: 1
+2026-05-11 20:33:21,593 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Received package: 81920 bytes
+2026-05-11 20:33:21,594 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_203321_594150
+2026-05-11 20:33:21,594 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:33:21,594 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Using device: 7
+2026-05-11 20:33:21,602 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul__k84t7qh/extract
+2026-05-11 20:33:21,602 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:33:21,602 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Found project directory: GeluMulCustom
+2026-05-11 20:33:21,602 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Running build script...
+2026-05-11 20:33:21,602 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul__k84t7qh/extract/GeluMulCustom
+2026-05-11 20:33:25,162 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_203321] Build failed
+2026-05-11 20:33:25,162 - __main__ - INFO - Released device: 7
+2026-05-11 20:33:25,162 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Released device: 7
+2026-05-11 20:33:25,166 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203321] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:33902 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:34:07,116 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:39688 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39698 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:34:07,294 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:39702 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:34:07,386 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Acquired processing slot. Active requests: 1
+2026-05-11 20:34:07,386 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Received package: 81920 bytes
+2026-05-11 20:34:07,388 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_203407_387467
+2026-05-11 20:34:07,388 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:34:07,388 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Using device: 7
+2026-05-11 20:34:07,396 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_za5p0kcp/extract
+2026-05-11 20:34:07,396 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:34:07,396 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Found project directory: GeluMulCustom
+2026-05-11 20:34:07,396 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Running build script...
+2026-05-11 20:34:07,396 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_za5p0kcp/extract/GeluMulCustom
+2026-05-11 20:34:37,075 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_203407] Build failed
+2026-05-11 20:34:37,075 - __main__ - INFO - Released device: 7
+2026-05-11 20:34:37,075 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Released device: 7
+2026-05-11 20:34:37,119 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_203407] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:39712 - "POST /api/v1/compile HTTP/1.1" 200 OK
+2026-05-11 20:45:14,125 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:58786 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58798 - "GET /api/v1/status HTTP/1.1" 200 OK
+2026-05-11 20:45:14,313 - __main__ - INFO - CANN environment found: /usr/local/Ascend/cann-8.5.0
+INFO:     127.0.0.1:58800 - "GET /health HTTP/1.1" 200 OK
+2026-05-11 20:45:14,404 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Acquired processing slot. Active requests: 1
+2026-05-11 20:45:14,405 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Received package: 81920 bytes
+2026-05-11 20:45:14,406 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Created log directory: /home/hrl-kope/AscendOpGenAgent/logs/gjz_910b_gelu_mul_20260511_204514_405674
+2026-05-11 20:45:14,406 - __main__ - INFO - Acquired requested device: 7
+2026-05-11 20:45:14,406 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Using device: 7
+2026-05-11 20:45:14,413 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Extracted package to /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_ydpynxwn/extract
+2026-05-11 20:45:14,413 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Loaded manifest: dict_keys(['op_name', 'client_id', 'run_evaluation'])
+2026-05-11 20:45:14,413 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Found project directory: GeluMulCustom
+2026-05-11 20:45:14,413 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Running build script...
+2026-05-11 20:45:14,414 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] project_dir absolute: /home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_ydpynxwn/extract/GeluMulCustom
+2026-05-11 20:45:43,135 - __main__ - ERROR - [gjz_910b_gelu_mul_20260511_204514] Build failed
+2026-05-11 20:45:43,135 - __main__ - INFO - Released device: 7
+2026-05-11 20:45:43,135 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Released device: 7
+2026-05-11 20:45:43,139 - __main__ - INFO - [gjz_910b_gelu_mul_20260511_204514] Released processing slot. Active requests: 0
+INFO:     127.0.0.1:58806 - "POST /api/v1/compile HTTP/1.1" 200 OK

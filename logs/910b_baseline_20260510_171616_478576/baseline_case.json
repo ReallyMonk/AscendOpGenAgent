@@ -1,0 +1,1 @@
+{"op_name": "clipped_swiglu", "shape_id": "S1", "api": "torch_npu.npu_swiglu", "runner_type": "torch_npu_custom_api", "input_builder": "swiglu_2d", "attrs": {"dim": -1}, "shape_params": {"B_S": 1024, "two_inter": 4096}, "inputs": {"x": {"shape": [1024, 4096], "dtype": "float16", "distribution": "normal", "low": null, "high": null, "threshold": null}}}

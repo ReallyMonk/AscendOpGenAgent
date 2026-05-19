@@ -1,0 +1,80 @@
+{
+  "operator_name": "relu",
+  "base_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel",
+  "files": {
+    "relu_kernel.h": {
+      "path": "relu_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/relu_kernel.h",
+      "size_bytes": 4207,
+      "md5": "b8db7c23d856b4d056c34cc76133b9f9",
+      "extension": ".h",
+      "content": "#pragma once\n\n#ifndef RELU_KERNEL_H\n#define RELU_KERNEL_H\n\n#include <algorithm>\n\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"relu_tiling.h\"\n\ntemplate <typename dataType>\nclass ReluKernel {\npublic:\n    __aicore__ inline void Init(\n        GM_ADDR x, GM_ADDR y, GM_ADDR tilingGM, AscendC::TPipe *pipe)\n    {\n        CopyTiling(&tiling_, tilingGM);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ dataType *>(x), tiling_.M * tiling_.N);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ dataType *>(y), tiling_.M * tiling_.N);\n\n        if ASCEND_IS_AIV {\n            pipe_ = pipe;\n            subBlockRows_ = tiling_.blockM / AscendC::GetSubBlockNum();\n            pipe_->InitBuffer(xInQueue_, 1, tiling_.N * sizeof(dataType));\n            pipe_->InitBuffer(yOutQueue_, 1, tiling_.N * sizeof(dataType));\n            if constexpr (!std::is_same_v<dataType, float>) {\n                pipe_->InitBuffer(xCastBuf_, tiling_.N * sizeof(float));\n                pipe_->InitBuffer(yCastBuf_, tiling_.N * sizeof(float));\n            }\n        }\n    }\n\n    __aicore__ inline void Process()\n    {\n        if ASCEND_IS_AIV {\n            const int coreIdx = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int subBlockIdx = AscendC::GetSubBlockIdx();\n\n            for (int localIdx = 0; localIdx < tiling_.tasksPerCore; ++localIdx) {\n                const int bx = coreIdx * tiling_.tasksPerCore + localIdx;\n                if (bx >= BlockCount()) {\n                    continue;\n                }\n\n                for (int row = 0; row < subBlockRows_; ++row) {\n                    const int rowIdx = bx * tiling_.blockM + subBlockIdx * subBlockRows_ + row;\n                    if (rowIdx < tiling_.M) {\n                        ProcessRow(rowIdx);\n                    }\n                }\n            }\n        }\n    }\n\nprivate:\n    __aicore__ inline int32_t BlockCount() const\n    {\n        return (tiling_.M + tiling_.blockM - 1) / tiling_.blockM;\n    }\n\n    __aicore__ inline void CopyInX(int32_t rowIdx)\n    {\n        xInQueue_.AllocTensor<dataType>(xInLocal_);\n        AscendC::DataCopy(xInLocal_, xGM_[rowIdx * tiling_.N], static_cast<uint32_t>(tiling_.N));\n        xInQueue_.EnQue(xInLocal_);\n    }\n\n    __aicore__ inline void CopyOutY(int32_t rowIdx)\n    {\n        yOutQueue_.DeQue<dataType>(yOutLocal_);\n        AscendC::DataCopy(yGM_[rowIdx * tiling_.N], yOutLocal_, static_cast<uint32_t>(tiling_.N));\n        yOutQueue_.FreeTensor(yOutLocal_);\n    }\n\n    __aicore__ inline void ComputeRow(int32_t rowIdx)\n    {\n        xInQueue_.DeQue<dataType>(xInLocal_);\n        yOutQueue_.AllocTensor<dataType>(yOutLocal_);\n\n        if constexpr (std::is_same_v<dataType, float>) {\n            AscendC::LocalTensor<float> xLocal = xInLocal_.template ReinterpretCast<float>();\n            AscendC::LocalTensor<float> yLocal = yOutLocal_.template ReinterpretCast<float>();\n            AscendC::Relu(yLocal, xLocal, tiling_.N);\n        } else {\n            AscendC::LocalTensor<float> xCast = xCastBuf_.Get<float>();\n            AscendC::LocalTensor<float> yCast = yCastBuf_.Get<float>();\n\n            AscendC::Cast(xCast, xInLocal_, AscendC::RoundMode::CAST_NONE, tiling_.N);\n            AscendC::PipeBarrier<PIPE_V>();\n\n            AscendC::Relu(yCast, xCast, tiling_.N);\n\n            AscendC::Cast(yOutLocal_, yCast, AscendC::RoundMode::CAST_NONE, tiling_.N);\n            AscendC::PipeBarrier<PIPE_V>();\n        }\n\n        yOutQueue_.EnQue(yOutLocal_);\n        xInQueue_.FreeTensor(xInLocal_);\n    }\n\n    __aicore__ inline void ProcessRow(int rowIdx)\n    {\n        CopyInX(rowIdx);\n        ComputeRow(rowIdx);\n        CopyOutY(rowIdx);\n    }\n\nprivate:\n    ReluKernelTiling tiling_{};\n    AscendC::TPipe *pipe_{nullptr};\n    int subBlockRows_{0};\n\n    AscendC::GlobalTensor<dataType> xGM_;\n    AscendC::GlobalTensor<dataType> yGM_;\n\n    AscendC::TQue<AscendC::TPosition::VECIN, 0> xInQueue_;\n    AscendC::TQue<AscendC::TPosition::VECOUT, 0> yOutQueue_;\n    AscendC::TBuf<AscendC::TPosition::VECCALC> xCastBuf_;\n    AscendC::TBuf<AscendC::TPosition::VECCALC> yCastBuf_;\n\n    AscendC::LocalTensor<dataType> xInLocal_;\n    AscendC::LocalTensor<dataType> yOutLocal_;\n};\n\n#endif\n"
+    },
+    "relu_fp16.cpp": {
+      "path": "relu_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/relu_fp16.cpp",
+      "size_bytes": 493,
+      "md5": "505b1fdf48f0ba31ba81f520efe31da9",
+      "extension": ".cpp",
+      "content": "#include \"relu_kernel.h\"\n\nextern \"C\" __global__ __aicore__ void relu_custom_fp16(\n    GM_ADDR x, GM_ADDR y, GM_ADDR tiling)\n{\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);\n    AscendC::TPipe pipe;\n    ReluKernel<half> kernel;\n    kernel.Init(x, y, tiling, &pipe);\n    kernel.Process();\n}\n\nextern \"C\" void relu_do_fp16(\n    uint32_t blockDim,\n    void *stream,\n    uint8_t *x,\n    uint8_t *y,\n    uint8_t *tiling)\n{\n    relu_custom_fp16<<<blockDim, nullptr, stream>>>(x, y, tiling);\n}\n"
+    },
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/pybind11.cpp",
+      "size_bytes": 2676,
+      "md5": "1582c0bb41f5710434276fac5cf87167",
+      "extension": ".cpp",
+      "content": "#include <algorithm>\n\n#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n\n#include \"relu_tiling.h\"\n\nextern \"C\" void relu_do_fp32(\n    uint32_t blockDim,\n    void *stream,\n    uint8_t *x,\n    uint8_t *y,\n    uint8_t *tiling);\n\nextern \"C\" void relu_do_fp16(\n    uint32_t blockDim,\n    void *stream,\n    uint8_t *x,\n    uint8_t *y,\n    uint8_t *tiling);\n\nextern \"C\" void relu_do_bf16(\n    uint32_t blockDim,\n    void *stream,\n    uint8_t *x,\n    uint8_t *y,\n    uint8_t *tiling);\n\nnamespace relu_ext {\n\nusing LaunchFn = void (*)(uint32_t, void *, uint8_t *, uint8_t *, uint8_t *);\n\npybind11::tuple run_relu(const at::Tensor &x)\n{\n    TORCH_CHECK(x.dim() == 2, \"x must be [M, N]\");\n    TORCH_CHECK(\n        x.scalar_type() == at::kFloat || x.scalar_type() == at::kHalf || x.scalar_type() == at::kBFloat16,\n        \"x must be float32, float16, or bfloat16\");\n    TORCH_CHECK(x.is_contiguous(), \"x must be contiguous\");\n\n    const auto m = static_cast<int32_t>(x.sizes()[0]);\n    const auto n = static_cast<int32_t>(x.sizes()[1]);\n\n    const int32_t mNum = (m + DEFAULT_RELU_BLOCK_M - 1) / DEFAULT_RELU_BLOCK_M;\n    const int32_t usedCoreNum = std::min<int32_t>(DEFAULT_RELU_NUM_PHYSICAL_CORES, mNum);\n    const int32_t tasksPerCore = (mNum + usedCoreNum - 1) / usedCoreNum;\n\n    at::Tensor y = at::empty_like(x);\n\n    at::Tensor tilingCpu = at::empty(\n        {static_cast<long>(sizeof(ReluKernelTiling))},\n        at::device(at::kCPU).dtype(at::kByte));\n    auto *tiling = reinterpret_cast<ReluKernelTiling *>(tilingCpu.data_ptr());\n    tiling->M = m;\n    tiling->N = n;\n    tiling->blockM = DEFAULT_RELU_BLOCK_M;\n    tiling->usedCoreNum = usedCoreNum;\n    tiling->tasksPerCore = tasksPerCore;\n    auto tilingNpu = tilingCpu.to(at::kPrivateUse1);\n\n    auto aclStream = c10_npu::getCurrentNPUStream().stream(false);\n    LaunchFn launch = nullptr;\n    if (x.scalar_type() == at::kFloat) {\n        launch = relu_do_fp32;\n    } else if (x.scalar_type() == at::kHalf) {\n        launch = relu_do_fp16;\n    } else if (x.scalar_type() == at::kBFloat16) {\n        launch = relu_do_bf16;\n    } else {\n        TORCH_CHECK(false, \"unsupported dtype\");\n    }\n    launch(\n        usedCoreNum,\n        aclStream,\n        static_cast<uint8_t *>(const_cast<void *>(x.storage().data())),\n        static_cast<uint8_t *>(const_cast<void *>(y.storage().data())),\n        static_cast<uint8_t *>(const_cast<void *>(tilingNpu.storage().data())));\n    return pybind11::make_tuple(y);\n}\n\n}  // namespace relu_ext\n\nPYBIND11_MODULE(_relu_ext, m)\n{\n    m.doc() = \"relu extension\";\n    m.def(\"run_relu\", &relu_ext::run_relu, \"\");\n}\n"
+    },
+    "relu_fp32.cpp": {
+      "path": "relu_fp32.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/relu_fp32.cpp",
+      "size_bytes": 494,
+      "md5": "f514d205ae043b56aee7d22ddce1d67a",
+      "extension": ".cpp",
+      "content": "#include \"relu_kernel.h\"\n\nextern \"C\" __global__ __aicore__ void relu_custom_fp32(\n    GM_ADDR x, GM_ADDR y, GM_ADDR tiling)\n{\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);\n    AscendC::TPipe pipe;\n    ReluKernel<float> kernel;\n    kernel.Init(x, y, tiling, &pipe);\n    kernel.Process();\n}\n\nextern \"C\" void relu_do_fp32(\n    uint32_t blockDim,\n    void *stream,\n    uint8_t *x,\n    uint8_t *y,\n    uint8_t *tiling)\n{\n    relu_custom_fp32<<<blockDim, nullptr, stream>>>(x, y, tiling);\n}\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/CMakeLists.txt",
+      "size_bytes": 3114,
+      "md5": "8a9b91f9033e17e902dfd895f81338b0",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"system on chip type\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"ASCEND CANN package installation directory\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode: npu\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type Release/Debug (default Debug)\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\n\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\nelse()\n    message(FATAL_ERROR \"ascendc_kernel_cmake does not exist, please check whether the cann package is installed.\")\nendif()\n\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\n\nascendc_library(kernels STATIC\n    ${CMAKE_CURRENT_SOURCE_DIR}/relu_fp32.cpp\n    ${CMAKE_CURRENT_SOURCE_DIR}/relu_fp16.cpp\n    ${CMAKE_CURRENT_SOURCE_DIR}/relu_bf16.cpp\n)\n\nascendc_include_directories(kernels PRIVATE\n    ${CMAKE_CURRENT_SOURCE_DIR}\n    ${ASCEND_CANN_PACKAGE_PATH}/include\n    ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime\n    ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof\n)\n\nadd_library(pybind11_lib SHARED \"${CMAKE_CURRENT_SOURCE_DIR}/pybind11.cpp\")\ntarget_link_libraries(pybind11_lib PRIVATE\n  kernels\n  torch_npu\n  m\n  dl\n)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\"\n  OUTPUT_STRIP_TRAILING_WHITESPACE\n  OUTPUT_VARIABLE TORCH_PATH\n)\nmessage(\"TORCH_PATH is ${TORCH_PATH}\")\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\"\n  OUTPUT_STRIP_TRAILING_WHITESPACE\n  OUTPUT_VARIABLE TORCH_NPU_PATH\n)\nmessage(\"TORCH_NPU_PATH is ${TORCH_NPU_PATH}\")\ntarget_link_directories(pybind11_lib PRIVATE\n  ${TORCH_PATH}/lib\n  ${TORCH_NPU_PATH}/lib\n)\ntarget_include_directories(pybind11_lib PRIVATE\n  \"${CMAKE_CURRENT_SOURCE_DIR}\"\n  ${TORCH_NPU_PATH}/include\n  ${TORCH_PATH}/include\n  ${TORCH_PATH}/include/torch/csrc/api/include\n)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE\n  ${PYBIND11_INC}\n  -D_GLIBCXX_USE_CXX11_ABI=1\n)\n\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\"\n  OUTPUT_STRIP_TRAILING_WHITESPACE\n  OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX\n)\nset_target_properties(pybind11_lib PROPERTIES\n  OUTPUT_NAME _relu_ext\n  PREFIX \"\"\n  SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\"\n)\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/kernel_common.h",
+      "size_bytes": 533,
+      "md5": "f97aa7c3b8819c0b0bb8271bf51615f3",
+      "extension": ".h",
+      "content": "#ifndef RELU_KERNEL_COMMON_H\n#define RELU_KERNEL_COMMON_H\n\n#include <cstddef>\n#include <cstdint>\n\n#include \"kernel_operator.h\"\n\n__aicore__ inline uint32_t CeilDivU32(uint32_t a, uint32_t b)\n{\n    return (a + b - 1U) / b;\n}\n\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *tiling, GM_ADDR tilingGM)\n{\n    int32_t *dst = reinterpret_cast<int32_t *>(tiling);\n    auto *src = reinterpret_cast<__gm__ int32_t *>(tilingGM);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) {\n        dst[i] = src[i];\n    }\n}\n\n#endif\n"
+    },
+    "relu_bf16.cpp": {
+      "path": "relu_bf16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/relu_bf16.cpp",
+      "size_bytes": 499,
+      "md5": "8115441d46045381dcc5c122c516df17",
+      "extension": ".cpp",
+      "content": "#include \"relu_kernel.h\"\n\nextern \"C\" __global__ __aicore__ void relu_custom_bf16(\n    GM_ADDR x, GM_ADDR y, GM_ADDR tiling)\n{\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);\n    AscendC::TPipe pipe;\n    ReluKernel<bfloat16_t> kernel;\n    kernel.Init(x, y, tiling, &pipe);\n    kernel.Process();\n}\n\nextern \"C\" void relu_do_bf16(\n    uint32_t blockDim,\n    void *stream,\n    uint8_t *x,\n    uint8_t *y,\n    uint8_t *tiling)\n{\n    relu_custom_bf16<<<blockDim, nullptr, stream>>>(x, y, tiling);\n}\n"
+    },
+    "relu_tiling.h": {
+      "path": "relu_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/relu/kernel/relu_tiling.h",
+      "size_bytes": 320,
+      "md5": "89c3108069a72db4fb0908a7b9ad07ab",
+      "extension": ".h",
+      "content": "#pragma once\n\n#ifndef RELU_TILING_H\n#define RELU_TILING_H\n\n#include <cstdint>\n\nconstexpr int32_t DEFAULT_RELU_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_RELU_NUM_PHYSICAL_CORES = 32;\n\nstruct ReluKernelTiling {\n    int32_t M;\n    int32_t N;\n    int32_t blockM;\n    int32_t usedCoreNum;\n    int32_t tasksPerCore;\n};\n\n#endif\n"
+    }
+  },
+  "metadata": {
+    "total_files": 8,
+    "total_size_bytes": 12336,
+    "file_types": {
+      ".h": 3,
+      ".cpp": 4,
+      ".txt": 1
+    }
+  }
+}

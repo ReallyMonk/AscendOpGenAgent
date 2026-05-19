@@ -1,0 +1,45 @@
+=== Build Script Output ===
+Return code: 1
+
+=== STDOUT ===
+Building gelu_mul AscendC kernel...
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /usr/local/python3.11.14/bin/python3 (found version "3.11.14") found components: Interpreter Development Development.Module Development.Embed 
+-- Found Torch: /usr/local/python3.11.14/lib/python3.11/site-packages/torch/lib/libtorch.so  
+-- Configuring incomplete, errors occurred!
+See also "/home/hrl-kope/AscendOpGenAgent/logs/tmp/openops_gelu_mul_3eguci1e/extract/GeluMulCustom/build/CMakeFiles/CMakeOutput.log".
+
+
+=== STDERR ===
+CMake Warning at /usr/local/python3.11.14/lib/python3.11/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  static library kineto_LIBRARY-NOTFOUND not found.
+Call Stack (most recent call first):
+  /usr/local/python3.11.14/lib/python3.11/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:125 (append_torchlib_if_found)
+  CMakeLists.txt:22 (find_package)
+
+
+CMake Error at CMakeLists.txt:23 (find_package):
+  Could not find a package configuration file provided by "pybind11" with any
+  of the following names:
+
+    pybind11Config.cmake
+    pybind11-config.cmake
+
+  Add the installation prefix of "pybind11" to CMAKE_PREFIX_PATH or set
+  "pybind11_DIR" to a directory containing one of the above files.  If
+  "pybind11" provides a separate development package or SDK, be sure it has
+  been installed.
+
+
+

@@ -1,0 +1,1 @@
+{"op_name": "gelu", "shape_id": "S2", "api": "torch.nn.functional.gelu", "runner_type": "torch_api", "input_builder": "unary_2d", "attrs": {}, "shape_params": {"B_S": 4096, "H": 3584}, "inputs": {"x": {"shape": [4096, 3584], "dtype": "float16", "distribution": "normal", "low": null, "high": null, "threshold": null}}}

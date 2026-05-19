@@ -24,3 +24,8 @@ projects_*_*.tar.gz
 # Local device-env-setup config (per-user)
 CLAUDE.md
 .DS_Store
+# output files
+output/
+opt_output/
+baseline_implementation/
+kope_output/

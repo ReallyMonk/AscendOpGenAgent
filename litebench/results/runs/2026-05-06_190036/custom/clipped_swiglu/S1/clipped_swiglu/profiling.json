@@ -1,0 +1,20 @@
+{
+  "profiling_available": true,
+  "timing": {
+    "ref_median_ms": 0.2119,
+    "custom_median_ms": 0.2122,
+    "speedup": 0.9987
+  },
+  "profiling": {
+    "task_duration_us": 95.56,
+    "aiv_time_us": 84.207,
+    "aiv_vec_ratio": 0.0946,
+    "aiv_scalar_ratio": 0.2719,
+    "aiv_mte2_ratio": 0.6565,
+    "aiv_mte3_ratio": 0.2486,
+    "aiv_icache_miss_rate": 0.0013,
+    "op_name": "clipped_swiglu",
+    "Profiling data saved to": "/home/hrl-kope/OpenOps/baseline_implementation/clipped_swiglu/profiling_round_0.json"
+  },
+  "error": ""
+}

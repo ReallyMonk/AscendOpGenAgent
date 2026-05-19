@@ -1,0 +1,1 @@
+{"op_name": "swi_glu", "shape_id": "S2", "api": "torch_npu.npu_swiglu", "runner_type": "torch_npu_custom_api", "input_builder": "swiglu_2d", "attrs": {"dim": -1}, "shape_params": {"B_S": 4096, "two_inter": 37888}, "inputs": {"x": {"shape": [4096, 37888], "dtype": "float16", "distribution": "normal", "low": null, "high": null, "threshold": null}}}

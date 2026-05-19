@@ -1,0 +1,9 @@
+=== Build Script Output ===
+Return code: 127
+
+=== STDOUT ===
+
+
+=== STDERR ===
+bash: logs/tmp/openops_softmax_v2_ebum54iv/extract/softmax_v2Custom/build.sh: No such file or directory
+

@@ -1,0 +1,23 @@
+{
+  "mode": "baseline",
+  "source": "measured",
+  "cache_key": "e8f0c50cb14fd135",
+  "server_name": "910b",
+  "hardware": "Ascend910B",
+  "device": "7",
+  "op_name": "swi_glu",
+  "shape_id": "S1",
+  "dtype": "float16",
+  "status": "success",
+  "correctness": "not_checked",
+  "e2e_median_ms": 0.092046,
+  "e2e_p95_ms": 0.114081,
+  "warmup": 20,
+  "repeat": 100,
+  "profiling_enabled": false,
+  "worker_url": "http://127.0.0.1:9027",
+  "remote_stage": "",
+  "remote_log_dir": "logs/910b_baseline_20260510_170638_122979",
+  "remote_error": "",
+  "created_at": "2026-05-10T17:06:53.149412"
+}

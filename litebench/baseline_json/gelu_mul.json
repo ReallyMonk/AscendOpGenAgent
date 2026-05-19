@@ -1,0 +1,72 @@
+{
+  "operator_name": "gelu_mul",
+  "base_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel",
+  "files": {
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel/pybind11.cpp",
+      "size_bytes": 1948,
+      "md5": "4ef0b281fb41c82bb17bd1069a12c34d",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"gelu_mul_tiling.h\"\nextern \"C\" void gelu_mul_do_fp32(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\nextern \"C\" void gelu_mul_do_fp16(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\nnamespace gelu_mul_ext {\nusing LF=void(*)(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\npybind11::tuple run_gelu_mul(const at::Tensor &x) {\n    TORCH_CHECK(x.dim()==2,\"x must be [M,2*inter]\");\n    TORCH_CHECK(x.scalar_type()==at::kFloat||x.scalar_type()==at::kHalf,\"unsupported dtype\");\n    TORCH_CHECK(x.is_contiguous(),\"must be contiguous\");\n    const auto m=static_cast<int32_t>(x.sizes()[0]), twoInter=static_cast<int32_t>(x.sizes()[1]);\n    TORCH_CHECK(twoInter%2==0,\"last dim must be even\");\n    const int32_t inter=twoInter/2;\n    const int32_t mNum=(m+DEFAULT_BLOCK_M-1)/DEFAULT_BLOCK_M;\n    const int32_t uc=std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES,mNum);\n    const int32_t tpc=(mNum+uc-1)/uc;\n    at::Tensor y=at::empty({m,inter},x.options());\n    at::Tensor tc=at::empty({static_cast<long>(sizeof(GeluMulKernelTiling))},at::device(at::kCPU).dtype(at::kByte));\n    auto *t=reinterpret_cast<GeluMulKernelTiling*>(tc.data_ptr());\n    t->M=m; t->N=twoInter; t->blockM=DEFAULT_BLOCK_M; t->usedCoreNum=uc; t->tasksPerCore=tpc;\n    auto tn=tc.to(at::kPrivateUse1);\n    auto stm=c10_npu::getCurrentNPUStream().stream(false);\n    LF l=nullptr;\n    if(x.scalar_type()==at::kFloat) l=gelu_mul_do_fp32;\n    else if(x.scalar_type()==at::kHalf) l=gelu_mul_do_fp16;\n    else TORCH_CHECK(false,\"unsupported\");\n    l(uc,stm,static_cast<uint8_t*>(const_cast<void*>(x.storage().data())),static_cast<uint8_t*>(const_cast<void*>(y.storage().data())),static_cast<uint8_t*>(const_cast<void*>(tn.storage().data())));\n    return pybind11::make_tuple(y);\n}}\nPYBIND11_MODULE(_gelu_mul_ext, m) { m.def(\"run_gelu_mul\",&gelu_mul_ext::run_gelu_mul,\"\"); }\n"
+    },
+    "gelu_mul_kernel.h": {
+      "path": "gelu_mul_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel/gelu_mul_kernel.h",
+      "size_bytes": 5096,
+      "md5": "81af30aa1a0e925a46eb15a7063918f1",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef GELU_MUL_KERNEL_H\n#define GELU_MUL_KERNEL_H\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"gelu_mul_tiling.h\"\n\nconstexpr int32_t GM_CHUNK = 64;\n\ntemplate <typename T>\nclass GeluMulKernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR tilingGM, AscendC::TPipe *pipe) {\n        CopyTiling(&tiling_, tilingGM);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(x), tiling_.M * tiling_.N);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(y), tiling_.M * tiling_.N / 2);\n        if ASCEND_IS_AIV {\n            pipe_ = pipe; subBlockRows_ = tiling_.blockM / AscendC::GetSubBlockNum();\n            pipe_->InitBuffer(xInQ_, 1, tiling_.N * sizeof(T));\n            pipe_->InitBuffer(yOutQ_, 1, tiling_.N / 2 * sizeof(T));\n            pipe_->InitBuffer(w1_, GM_CHUNK * sizeof(float));\n            pipe_->InitBuffer(w2_, GM_CHUNK * sizeof(float));\n            pipe_->InitBuffer(w3_, GM_CHUNK * sizeof(float));\n        }\n    }\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int ci = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int si = AscendC::GetSubBlockIdx();\n            for (int li = 0; li < tiling_.tasksPerCore; ++li) {\n                const int bx = ci * tiling_.tasksPerCore + li;\n                if (bx >= BlockCount()) continue;\n                for (int r = 0; r < subBlockRows_; ++r) {\n                    const int ri = bx * tiling_.blockM + si * subBlockRows_ + r;\n                    if (ri < tiling_.M) ProcessRow(ri);\n                }\n            }\n        }\n    }\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (tiling_.M + tiling_.blockM - 1) / tiling_.blockM; }\n    __aicore__ inline void CopyIn(int32_t ri) {\n        xInQ_.AllocTensor<T>(xInL_); AscendC::DataCopy(xInL_, xGM_[ri * tiling_.N], tiling_.N); xInQ_.EnQue(xInL_);\n    }\n    __aicore__ inline void CopyOut(int32_t ri) {\n        yOutQ_.DeQue<T>(yOutL_); AscendC::DataCopy(yGM_[ri * tiling_.N / 2], yOutL_, tiling_.N / 2); yOutQ_.FreeTensor(yOutL_);\n    }\n    __aicore__ inline void ComputeRow(int32_t ri) {\n        xInQ_.DeQue<T>(xInL_); yOutQ_.AllocTensor<T>(yOutL_);\n        const int32_t half = tiling_.N / 2;\n\n        for (int32_t start = 0; start < half; start += GM_CHUNK) {\n            int32_t chunk = (start + GM_CHUNK <= half) ? GM_CHUNK : (half - start);\n            auto x1Wk = w1_.Get<float>();\n            auto x2Wk = w2_.Get<float>();\n            auto tWk   = w3_.Get<float>();\n\n            if constexpr (std::is_same_v<T, float>) {\n                auto src = xInL_.template ReinterpretCast<float>();\n                for (int32_t i = 0; i < chunk; ++i) {\n                    x1Wk(i) = src(start + i);\n                    x2Wk(i) = src(half + start + i);\n                    tWk(i)   = src(half + start + i);\n                }\n            } else {\n                AscendC::Cast(x1Wk, xInL_[start], AscendC::RoundMode::CAST_NONE, chunk);\n                AscendC::Cast(x2Wk, xInL_[half + start], AscendC::RoundMode::CAST_NONE, chunk);\n                AscendC::Cast(tWk,   xInL_[half + start], AscendC::RoundMode::CAST_NONE, chunk);\n                AscendC::PipeBarrier<PIPE_V>();\n            }\n\n            // GELU gate on tWk: 0.5*x2*(1+tanh(0.7978845608*(x2+0.044715*x2^3)))\n            // tWk = x2^2\n            AscendC::Mul(tWk, tWk, tWk, chunk);\n            // tWk = x2^3 = x2^2 * x2 (x2 preserved in x2Wk)\n            AscendC::Mul(tWk, tWk, x2Wk, chunk);\n            // tWk = 0.044715 * x2^3\n            AscendC::Muls(tWk, tWk, 0.044715f, chunk);\n            // tWk = x2 + 0.044715*x2^3\n            AscendC::Add(tWk, x2Wk, tWk, chunk);\n            // tWk = 0.7978845608 * (x2 + 0.044715*x2^3)\n            AscendC::Muls(tWk, tWk, 0.7978845608f, chunk);\n            // tanh\n            AscendC::Tanh(tWk, tWk, chunk);\n            // 1 + tanh\n            AscendC::Adds(tWk, tWk, 1.0f, chunk);\n            // x2 * (1 + tanh)\n            AscendC::Mul(tWk, x2Wk, tWk, chunk);\n            // 0.5 * x2 * (1 + tanh) = GELU(x2)\n            AscendC::Muls(tWk, tWk, 0.5f, chunk);\n\n            // Result: x1 * GELU(x2)\n            AscendC::Mul(x1Wk, x1Wk, tWk, chunk);\n\n            if constexpr (std::is_same_v<T, float>) {\n                auto dst = yOutL_.template ReinterpretCast<float>();\n                for (int32_t i = 0; i < chunk; ++i) dst(start + i) = x1Wk(i);\n            } else {\n                AscendC::Cast(yOutL_[start], x1Wk, AscendC::RoundMode::CAST_NONE, chunk);\n                AscendC::PipeBarrier<PIPE_V>();\n            }\n        }\n        yOutQ_.EnQue(yOutL_); xInQ_.FreeTensor(xInL_);\n    }\n    __aicore__ inline void ProcessRow(int ri) { CopyIn(ri); ComputeRow(ri); CopyOut(ri); }\nprivate:\n    GeluMulKernelTiling tiling_{}; AscendC::TPipe *pipe_{}; int subBlockRows_{};\n    AscendC::GlobalTensor<T> xGM_, yGM_;\n    AscendC::TQue<AscendC::TPosition::VECIN,0> xInQ_; AscendC::TQue<AscendC::TPosition::VECOUT,0> yOutQ_;\n    AscendC::TBuf<AscendC::TPosition::VECCALC> w1_, w2_, w3_;\n    AscendC::LocalTensor<T> xInL_, yOutL_;\n};\n#endif\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel/CMakeLists.txt",
+      "size_bytes": 2676,
+      "md5": "89a7223096007af0ba9cd0d7750afb26",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"SOC\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"CANN\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\nelse()\n    message(FATAL_ERROR \"ascendc_kernel_cmake not found\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC gelu_mul_fp32.cpp gelu_mul_fp16.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _gelu_mul_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel/kernel_common.h",
+      "size_bytes": 365,
+      "md5": "eafdc39ece1c3b0a85218a32de0b528f",
+      "extension": ".h",
+      "content": "#pragma once\n#include <cstddef>\n#include <cstdint>\n#include \"kernel_operator.h\"\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *tiling, GM_ADDR tilingGM) {\n    int32_t *dst = reinterpret_cast<int32_t *>(tiling);\n    auto *src = reinterpret_cast<__gm__ int32_t *>(tilingGM);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) dst[i] = src[i];\n}\n"
+    },
+    "gelu_mul_fp32.cpp": {
+      "path": "gelu_mul_fp32.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel/gelu_mul_fp32.cpp",
+      "size_bytes": 408,
+      "md5": "7050c1e2b31ee4fdd58528cb8e48af35",
+      "extension": ".cpp",
+      "content": "#include \"gelu_mul_kernel.h\"\nextern \"C\" __global__ __aicore__ void gelu_mul_custom_fp32(GM_ADDR x, GM_ADDR y, GM_ADDR t) {\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    GeluMulKernel<float> k; k.Init(x, y, t, &p); k.Process();\n}\nextern \"C\" void gelu_mul_do_fp32(uint32_t d, void* s, uint8_t* x, uint8_t* y, uint8_t* t) {\n    gelu_mul_custom_fp32<<<d, nullptr, s>>>(x, y, t);\n}\n"
+    },
+    "gelu_mul_fp16.cpp": {
+      "path": "gelu_mul_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel/gelu_mul_fp16.cpp",
+      "size_bytes": 407,
+      "md5": "10e9150c96da5492c8a73bd5796c60fc",
+      "extension": ".cpp",
+      "content": "#include \"gelu_mul_kernel.h\"\nextern \"C\" __global__ __aicore__ void gelu_mul_custom_fp16(GM_ADDR x, GM_ADDR y, GM_ADDR t) {\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    GeluMulKernel<half> k; k.Init(x, y, t, &p); k.Process();\n}\nextern \"C\" void gelu_mul_do_fp16(uint32_t d, void* s, uint8_t* x, uint8_t* y, uint8_t* t) {\n    gelu_mul_custom_fp16<<<d, nullptr, s>>>(x, y, t);\n}\n"
+    },
+    "gelu_mul_tiling.h": {
+      "path": "gelu_mul_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/gelu_mul/kernel/gelu_mul_tiling.h",
+      "size_bytes": 296,
+      "md5": "0532c915703668dfbb234961a2b48c11",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef GELU_MUL_TILING_H\n#define GELU_MUL_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct GeluMulKernelTiling { int32_t M; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore; };\n#endif\n"
+    }
+  },
+  "metadata": {
+    "total_files": 7,
+    "total_size_bytes": 11196,
+    "file_types": {
+      ".cpp": 3,
+      ".h": 3,
+      ".txt": 1
+    }
+  }
+}

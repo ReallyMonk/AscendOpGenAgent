@@ -1,0 +1,2 @@
+run_id,mode,op_name,shape_id,benchmark_layer,benchmark_role,category,dtype,server_name,device,backend,status,correctness,e2e_median_ms,e2e_p95_ms,profiling_available,profiling_path,custom_dir,worker_url,created_at,source,cache_key
+2026-05-11_203224,custom,gelu_mul,S1,fusion,anchor,activation,float16,910b,7,remote_custom,compile_or_eval_failed,,,,False,litebench/results/runs/2026-05-11_203224/custom/gelu_mul/S1/gelu_mul/profiling.json,/home/hrl-kope/AscendOpGenAgent/opt_output/gelu_mul,http://127.0.0.1:9027,2026-05-11T20:32:28.914167,measured,

@@ -1,0 +1,3 @@
+run_id,op_name,shape_id,server_name,device,task_duration_us,aiv_vec_ratio,aiv_scalar_ratio,aiv_mte2_ratio,aiv_mte3_ratio,aiv_icache_miss_rate,aic_mac_ratio,cube_utilization,profiling_error
+2026-05-05_171237,add_rms_norm_quant,S2,910b,7,,,,,,,,,
+2026-05-05_171237,add_rms_norm_quant,S3,910b,7,,,,,,,,,

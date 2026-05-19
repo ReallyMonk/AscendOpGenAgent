@@ -1,0 +1,2 @@
+op_name,shape_id,dtype,server_name,device,baseline_status,custom_status,baseline_e2e_ms,custom_e2e_ms,e2e_speedup,baseline_task_duration_us,custom_task_duration_us,task_speedup,vec_ratio_delta,scalar_ratio_delta,mte2_ratio_delta,mte3_ratio_delta,baseline_profiling_path,custom_profiling_path,custom_dir
+gelu,S2,float16,910b,7,missing,failed,,,,,,,,,,,,,/home/hrl-kope/AscendOpGenAgent/output/gelu

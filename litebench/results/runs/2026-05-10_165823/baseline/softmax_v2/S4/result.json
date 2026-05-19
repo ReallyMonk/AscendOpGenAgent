@@ -1,0 +1,23 @@
+{
+  "mode": "baseline",
+  "source": "measured",
+  "cache_key": "820ecdd318ff5f38",
+  "server_name": "910b",
+  "hardware": "Ascend910B",
+  "device": "7",
+  "op_name": "softmax_v2",
+  "shape_id": "S4",
+  "dtype": "float16",
+  "status": "success",
+  "correctness": "not_checked",
+  "e2e_median_ms": 2.595343,
+  "e2e_p95_ms": 2.608594,
+  "warmup": 20,
+  "repeat": 100,
+  "profiling_enabled": false,
+  "worker_url": "http://127.0.0.1:9027",
+  "remote_stage": "",
+  "remote_log_dir": "logs/910b_baseline_20260510_170624_071185",
+  "remote_error": "",
+  "created_at": "2026-05-10T17:06:37.900469"
+}

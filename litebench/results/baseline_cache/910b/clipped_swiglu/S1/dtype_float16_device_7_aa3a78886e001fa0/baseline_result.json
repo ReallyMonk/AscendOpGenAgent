@@ -1,0 +1,23 @@
+{
+  "mode": "baseline",
+  "source": "measured",
+  "cache_key": "aa3a78886e001fa0",
+  "server_name": "910b",
+  "hardware": "Ascend910B",
+  "device": "7",
+  "op_name": "clipped_swiglu",
+  "shape_id": "S1",
+  "dtype": "float16",
+  "status": "success",
+  "correctness": "not_checked",
+  "e2e_median_ms": 0.085067,
+  "e2e_p95_ms": 0.102142,
+  "warmup": 20,
+  "repeat": 100,
+  "profiling_enabled": true,
+  "worker_url": "http://127.0.0.1:9001",
+  "remote_stage": "",
+  "remote_log_dir": "/home/hrl-kope/OpenOps/logs/benchmark/910b_baseline_20260506_190134_198736",
+  "remote_error": "",
+  "created_at": "2026-05-06T19:01:51.950146"
+}

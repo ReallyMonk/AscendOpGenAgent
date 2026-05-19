@@ -1,0 +1,64 @@
+{
+  "operator_name": "cross_entropy_loss",
+  "base_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss/kernel",
+  "files": {
+    "xent_tiling.h": {
+      "path": "xent_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss/kernel/xent_tiling.h",
+      "size_bytes": 285,
+      "md5": "a9368907fe743ae02eb0dbd339119455",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef XENT_TILING_H\n#define XENT_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct XentKernelTiling { int32_t M; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore; };\n#endif\n"
+    },
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss/kernel/pybind11.cpp",
+      "size_bytes": 1865,
+      "md5": "0581f3f1fb7dad89e5b25a54ca2b3d43",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"xent_tiling.h\"\nextern \"C\" void xent_do_fp16(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\nnamespace xent_ext {\nusing LF=void(*)(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*,uint8_t*);\npybind11::tuple run_cross_entropy_loss(const at::Tensor &x, const at::Tensor &target) {\n    TORCH_CHECK(x.dim()==2,\"x must be [M,V]\"); TORCH_CHECK(x.scalar_type()==at::kHalf,\"fp16 only\");\n    TORCH_CHECK(target.dim()==1,\"target must be [M]\"); TORCH_CHECK(x.is_contiguous(),\"must be contiguous\");\n    const auto M=static_cast<int32_t>(x.sizes()[0]), V=static_cast<int32_t>(x.sizes()[1]);\n    auto tgt = target.to(at::kInt).contiguous();\n    const int32_t mNum=(M+DEFAULT_BLOCK_M-1)/DEFAULT_BLOCK_M;\n    const int32_t uc=std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES,mNum);\n    const int32_t tpc=(mNum+uc-1)/uc;\n    at::Tensor y=at::empty({M}, x.options().dtype(at::kFloat));\n    at::Tensor tc=at::empty({static_cast<long>(sizeof(XentKernelTiling))},at::device(at::kCPU).dtype(at::kByte));\n    auto *t=reinterpret_cast<XentKernelTiling*>(tc.data_ptr());\n    t->M=M; t->N=V; t->blockM=DEFAULT_BLOCK_M; t->usedCoreNum=uc; t->tasksPerCore=tpc;\n    auto tn=tc.to(at::kPrivateUse1);\n    auto stm=c10_npu::getCurrentNPUStream().stream(false);\n    xent_do_fp16(uc,stm,\n        static_cast<uint8_t*>(const_cast<void*>(x.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(tgt.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(y.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(tn.storage().data())));\n    // Return per-token loss and mean loss\n    return pybind11::make_tuple(y.mean(), y);\n}}\nPYBIND11_MODULE(_xent_ext, m) { m.def(\"run_cross_entropy_loss\",&xent_ext::run_cross_entropy_loss,\"\"); }\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss/kernel/CMakeLists.txt",
+      "size_bytes": 2480,
+      "md5": "5d3fc4b45ad6428e7225318d47be4fe2",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"SOC\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"CANN\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelse()\n    message(FATAL_ERROR \"ascendc_kernel_cmake not found\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC xent_fp16.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _xent_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss/kernel/kernel_common.h",
+      "size_bytes": 346,
+      "md5": "a85c3f7755da385b9b124d2420424a1b",
+      "extension": ".h",
+      "content": "#pragma once\n#include <cstdint>\n#include \"kernel_operator.h\"\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *tiling, GM_ADDR tilingGM) {\n    int32_t *dst = reinterpret_cast<int32_t *>(tiling);\n    auto *src = reinterpret_cast<__gm__ int32_t *>(tilingGM);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) dst[i] = src[i];\n}\n"
+    },
+    "xent_fp16.cpp": {
+      "path": "xent_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss/kernel/xent_fp16.cpp",
+      "size_bytes": 406,
+      "md5": "020bae2f4f1b3a1b0237194a04f1cfdb",
+      "extension": ".cpp",
+      "content": "#include \"xent_kernel.h\"\nextern \"C\" __global__ __aicore__ void xent_custom_fp16(GM_ADDR x,GM_ADDR tgt,GM_ADDR y,GM_ADDR t){\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    XentKernel<half> k; k.Init(x,tgt,y,t,&p); k.Process();\n}\nextern \"C\" void xent_do_fp16(uint32_t d,void* s,uint8_t* x,uint8_t* tgt,uint8_t* y,uint8_t* t){\n    xent_custom_fp16<<<d,nullptr,s>>>(x,tgt,y,t);\n}\n"
+    },
+    "xent_kernel.h": {
+      "path": "xent_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/litebench/baseline_implementation/cross_entropy_loss/kernel/xent_kernel.h",
+      "size_bytes": 4053,
+      "md5": "471b526559070287804bf941ed8a1789",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef XENT_KERNEL_H\n#define XENT_KERNEL_H\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"xent_tiling.h\"\nconstexpr int32_t XENT_CHUNK = 64;\n\ntemplate <typename T>\nclass XentKernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR x, GM_ADDR target, GM_ADDR y, GM_ADDR tilingGM, AscendC::TPipe *pipe) {\n        CopyTiling(&tiling_, tilingGM);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(x), tiling_.M * tiling_.N);\n        tgtGM_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(target), tiling_.M);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ float *>(y), tiling_.M);\n        if ASCEND_IS_AIV {\n            pipe_ = pipe; subBlockRows_ = tiling_.blockM / AscendC::GetSubBlockNum();\n            pipe_->InitBuffer(chunkQ_, 1, XENT_CHUNK * sizeof(T));\n            pipe_->InitBuffer(wF_, XENT_CHUNK * sizeof(float));\n            pipe_->InitBuffer(sBuf_, sizeof(float));\n        }\n    }\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int ci = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int si = AscendC::GetSubBlockIdx();\n            for (int li = 0; li < tiling_.tasksPerCore; ++li) {\n                const int bx = ci * tiling_.tasksPerCore + li;\n                if (bx >= BlockCount()) continue;\n                for (int r = 0; r < subBlockRows_; ++r) {\n                    const int ri = bx * tiling_.blockM + si * subBlockRows_ + r;\n                    if (ri < tiling_.M) ProcessRow(ri);\n                }\n            }\n        }\n    }\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (tiling_.M + tiling_.blockM - 1) / tiling_.blockM; }\n\n    __aicore__ inline void ProcessRow(int32_t ri) {\n        int32_t tgt = tgtGM_.GetValue(ri);\n        float maxVal = -1.0e9f, xTgt = 0.0f;\n        int32_t rowBase = ri * tiling_.N;\n\n        // Pass 1: find max and x[target]\n        for (int32_t start = 0; start < tiling_.N; start += XENT_CHUNK) {\n            int32_t chunk = (start + XENT_CHUNK <= tiling_.N) ? XENT_CHUNK : (tiling_.N - start);\n            chunkQ_.AllocTensor<T>(chunkL_);\n            AscendC::DataCopy(chunkL_, xGM_[rowBase + start], chunk);\n            chunkQ_.EnQue(chunkL_);\n            chunkQ_.DeQue<T>(chunkL_);\n            auto xFp32 = wF_.Get<float>();\n            AscendC::Cast(xFp32, chunkL_, AscendC::RoundMode::CAST_NONE, chunk);\n            AscendC::PipeBarrier<PIPE_V>();\n            for (int32_t i = 0; i < chunk; ++i) {\n                float v = xFp32(i);\n                if (v > maxVal) maxVal = v;\n                if (start + i == tgt) xTgt = v;\n            }\n            chunkQ_.FreeTensor(chunkL_);\n        }\n\n        // Pass 2: sum(exp(x - max))\n        float sumVal = 0.0f;\n        for (int32_t start = 0; start < tiling_.N; start += XENT_CHUNK) {\n            int32_t chunk = (start + XENT_CHUNK <= tiling_.N) ? XENT_CHUNK : (tiling_.N - start);\n            chunkQ_.AllocTensor<T>(chunkL_);\n            AscendC::DataCopy(chunkL_, xGM_[rowBase + start], chunk);\n            chunkQ_.EnQue(chunkL_);\n            chunkQ_.DeQue<T>(chunkL_);\n            auto xFp32 = wF_.Get<float>();\n            AscendC::Cast(xFp32, chunkL_, AscendC::RoundMode::CAST_NONE, chunk);\n            AscendC::PipeBarrier<PIPE_V>();\n            AscendC::Adds(xFp32, xFp32, -maxVal, chunk);\n            AscendC::Exp(xFp32, xFp32, chunk);\n            AscendC::PipeBarrier<PIPE_V>();\n            for (int32_t i = 0; i < chunk; ++i) sumVal += xFp32(i);\n            chunkQ_.FreeTensor(chunkL_);\n        }\n\n        auto s = sBuf_.Get<float>();\n        s(0) = sumVal;\n        AscendC::Ln(s, s, 1);\n        yGM_.SetValue(ri, s(0) + maxVal - xTgt);\n    }\nprivate:\n    XentKernelTiling tiling_{}; AscendC::TPipe *pipe_{}; int subBlockRows_{};\n    AscendC::GlobalTensor<T> xGM_;\n    AscendC::GlobalTensor<int32_t> tgtGM_;\n    AscendC::GlobalTensor<float> yGM_;\n    AscendC::TQue<AscendC::TPosition::VECIN,0> chunkQ_;\n    AscendC::TBuf<AscendC::TPosition::VECCALC> wF_, sBuf_;\n    AscendC::LocalTensor<T> chunkL_;\n};\n#endif\n"
+    }
+  },
+  "metadata": {
+    "total_files": 6,
+    "total_size_bytes": 9435,
+    "file_types": {
+      ".h": 3,
+      ".cpp": 2,
+      ".txt": 1
+    }
+  }
+}

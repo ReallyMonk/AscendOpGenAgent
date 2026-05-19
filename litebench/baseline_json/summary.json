@@ -1,0 +1,122 @@
+{
+  "version": "1.0",
+  "created_at": "1779186699.524811",
+  "total_operators": 23,
+  "operators": [
+    {
+      "name": "add_layer_norm",
+      "files": 8,
+      "size_kb": 19.1787109375
+    },
+    {
+      "name": "add_rms_norm",
+      "files": 6,
+      "size_kb": 9.0869140625
+    },
+    {
+      "name": "add_rms_norm_dynamic_quant",
+      "files": 6,
+      "size_kb": 10.447265625
+    },
+    {
+      "name": "add_rms_norm_quant",
+      "files": 6,
+      "size_kb": 10.4326171875
+    },
+    {
+      "name": "avg_pool2d",
+      "files": 6,
+      "size_kb": 7.53125
+    },
+    {
+      "name": "batch_mat_mul_v3",
+      "files": 6,
+      "size_kb": 7.322265625
+    },
+    {
+      "name": "clipped_swiglu",
+      "files": 7,
+      "size_kb": 10.7197265625
+    },
+    {
+      "name": "conv2d_v2",
+      "files": 6,
+      "size_kb": 8.4892578125
+    },
+    {
+      "name": "cross_entropy_loss",
+      "files": 6,
+      "size_kb": 9.2138671875
+    },
+    {
+      "name": "embedding_bag",
+      "files": 6,
+      "size_kb": 7.2890625
+    },
+    {
+      "name": "flash_attention_score",
+      "files": 6,
+      "size_kb": 8.650390625
+    },
+    {
+      "name": "gather_v2",
+      "files": 6,
+      "size_kb": 6.8505859375
+    },
+    {
+      "name": "ge_glu_v2",
+      "files": 7,
+      "size_kb": 10.9599609375
+    },
+    {
+      "name": "gelu",
+      "files": 11,
+      "size_kb": 17.6494140625
+    },
+    {
+      "name": "gelu_mul",
+      "files": 7,
+      "size_kb": 10.93359375
+    },
+    {
+      "name": "layer_norm_v3",
+      "files": 7,
+      "size_kb": 12.6357421875
+    },
+    {
+      "name": "masked_softmax_with_rel_pos_bias",
+      "files": 6,
+      "size_kb": 10.986328125
+    },
+    {
+      "name": "mat_mul_v3",
+      "files": 6,
+      "size_kb": 6.8544921875
+    },
+    {
+      "name": "relu",
+      "files": 8,
+      "size_kb": 12.046875
+    },
+    {
+      "name": "rms_norm",
+      "files": 8,
+      "size_kb": 11.5576171875
+    },
+    {
+      "name": "scaled_masked_softmax_v2",
+      "files": 6,
+      "size_kb": 10.5263671875
+    },
+    {
+      "name": "softmax_v2",
+      "files": 7,
+      "size_kb": 10.2294921875
+    },
+    {
+      "name": "swi_glu",
+      "files": 7,
+      "size_kb": 10.658203125
+    }
+  ]
+}

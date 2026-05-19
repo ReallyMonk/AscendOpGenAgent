@@ -1,0 +1,2 @@
+run_id,op_name,shape_id,server_name,device,task_duration_us,aiv_vec_ratio,aiv_scalar_ratio,aiv_mte2_ratio,aiv_mte3_ratio,aiv_icache_miss_rate,aic_mac_ratio,cube_utilization,profiling_error
+2026-05-06_183602,scaled_masked_softmax_v2,S1,910b,7,230.64,0.2715,0.1773,0.5909,0.1985,0.0088,,,

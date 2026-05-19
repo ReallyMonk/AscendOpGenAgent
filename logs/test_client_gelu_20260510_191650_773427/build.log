@@ -1,0 +1,9 @@
+=== Build Script Output ===
+Return code: 127
+
+=== STDOUT ===
+
+
+=== STDERR ===
+bash: logs/tmp/openops_gelu__k3fh6fu/extract/GeluCustom/build.sh: No such file or directory
+
