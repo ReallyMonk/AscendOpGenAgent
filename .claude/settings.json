@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 *)",
+      "Bash(python *)",
+      "Bash(npu-smi *)",
+      "Bash(nproc)",
+      "Bash(lscpu)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(rm *)",
+      "Bash(cd *)",
+      "Bash(pwd)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(export *)",
+      "Bash(echo *)",
+      "Bash(chmod *)",
+      "Bash(chown *)",
+      "Bash(lsmod)",
+      "Bash(uname *)",
+      "Bash(env)",
+      "Bash(printenv *)",
+      "Bash(ps aux)",
+      "Bash(ss -tuln)",
+      "Bash(df -h)",
+      "Bash(free -h)",
+      "Bash(id)",
+      "Bash(whoami)",
+      "Bash(uptime)",
+      "Bash(date)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)"
+    ]
+  }
+}
