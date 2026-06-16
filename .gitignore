@@ -31,3 +31,7 @@ baseline_implementation/
 kope_output/
 qoder_output/
 AscendOpGenAgent/.qoder/skills/ascendc-generate/references/AscendC_knowledge
+AscendOpGenAgent/opt_memory
+AscendOpGenAgent/records
+AscendOpGenAgent/reverse_source
+AscendOpGenAgent/knowledge_card
