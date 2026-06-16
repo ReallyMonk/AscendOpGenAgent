@@ -1,0 +1,130 @@
+# CANNBench-Lite
+
+> Lightweight NPU operator benchmark CLI and remote worker toolkit for Ascend 910B.
+
+## What This Project Does
+
+CANNBench-Lite measures the performance of NPU operators (PyTorch / torch_npu APIs and custom AscendC kernels) on Huawei Ascend hardware. It provides:
+
+1. **Operator Registry** — JSON-driven benchmark case definitions (operator, shape, dtype, category).
+2. **Baseline Benchmarking** — Run PyTorch/torch_npu reference operators remotely and collect e2e latency + profiling metrics.
+3. **Custom Kernel Benchmarking** — Compile, deploy, evaluate, and profile AscendC custom operator implementations.
+4. **Result Comparison** — Compare baseline vs custom results with speedup and hardware counter deltas.
+
+## Installation
+
+```bash
+# Install as a standalone CLI tool
+uv tool install .
+
+# Or with remote worker server dependencies
+uv tool install ".[server]"
+
+# Development (editable)
+uv pip install -e ".[dev]"
+```
+
+## CLI Commands
+
+| Command | Entry Point | Description |
+|---------|-------------|-------------|
+| `cannbench-lite` | `cannbench.cli:main` | Main CLI (list / run-baseline / run-custom / compare) |
+| `cannbench-worker` | `cannbench.remote.worker_server:main` | Remote worker server (requires `[server]` extra) |
+
+### Quick Examples
+
+```bash
+# List available benchmark cases
+cannbench-lite list --set main_benchmark
+cannbench-lite list --op gelu --shape S1 --json
+
+# Run baseline benchmark
+cannbench-lite run-baseline --op gelu --shape S1 --server 910b --device 7 --profiling
+
+# Run custom kernel benchmark
+cannbench-lite run-custom --op avg_pool2d --shape S2 --custom-dir output/avg_pool2d --server 910b --profiling
+
+# Compare results
+cannbench-lite compare --results-dir results/runs/2025-01-01_120000
+
+# Start worker server
+cannbench-worker --port 9027 --log-dir /tmp/cannbench-logs --devices 0,1,2,3
+```
+
+## Architecture (Client-Server)
+
+```
+[CLI Client]  --HTTP-->  [Worker Server]  --subprocess-->  [baseline_benchmark_runner / profiling_runner]
+     |                        |
+     |-- compile_remote ------|  (tar package upload, build, eval, profile)
+     |                        |
+     +-- RemoteWorkerClient --+  (httpx async HTTP client with retry/health-check)
+```
+
+- **Client side**: `cannbench-lite` CLI + `RemoteWorkerClient`. Requires only `httpx`. Runs anywhere.
+- **Server side**: `cannbench-worker` FastAPI server. Requires `fastapi`, `uvicorn`, `pandas`, and Ascend CANN toolkit + torch/torch_npu on the NPU machine.
+
+## Source Layout
+
+```
+src/cannbench/
+  cli.py                          # CLI entry point (argparse, 4 subcommands)
+  scripts/
+    registry_utils.py             # BenchmarkRegistry, ServerRegistry, RunnerTemplateRegistry
+    case_expander.py              # ExpandedCase, expand_case()
+    baseline_runner.py            # build_remote_case_payload, run_baseline_case_remote, cache logic
+    custom_remote_runner.py       # run_custom_case, compile_remote subprocess
+    compare_results.py            # write_compare_csv, build_compare_rows
+    result_writer.py              # write_json, append_csv
+  remote/
+    worker_server.py              # FastAPI app, DevicePool, compile/profile/baseline endpoints
+    remote_client.py              # RemoteWorkerClient (async httpx)
+    compile_remote.py             # CLI: package, upload, compile, eval/profile
+    baseline_benchmark_runner.py  # Subprocess: run a single baseline case on NPU
+    profiling_runner.py           # Subprocess: acl.prof + msprof profiling
+  data/
+    registry/                     # JSON registries (bundled in package)
+      lightweight_benchmark_registry_v2.json
+      runner_templates_v1.json
+      servers.json
+    assets/
+      evaluate.py                 # Evaluation helper with structured reporting (bundled)
+      generate_pybind.py          # PyBind code generator with --output-path (bundled)
+      shared/                     # Shared evaluation modules (bundled)
+        reporting.py              # TestCaseMeta, EvalResult, CSV/MD/log report writers
+        case_registry.py          # CaseRecord, CaseRegistry for cases.json persistence + replay
+      template/CppExtension/      # CppExtension template (bundled)
+```
+
+## Key Data Files
+
+| File | Purpose | Loaded By |
+|------|---------|-----------|
+| `lightweight_benchmark_registry_v2.json` | Operator definitions, shapes, benchmark sets | `BenchmarkRegistry` |
+| `runner_templates_v1.json` | Per-operator runner config (api, input_builder, attrs) | `RunnerTemplateRegistry` |
+| `servers.json` | Remote server endpoints and hardware info | `ServerRegistry` |
+
+## Documentation Index
+
+Detailed documentation for LLM agents is in `repo-wiki/`:
+
+- [repo-wiki/architecture.md](repo-wiki/architecture.md) — System architecture, component relationships, execution flow
+- [repo-wiki/cli-reference.md](repo-wiki/cli-reference.md) — Complete CLI command and flag reference
+- [repo-wiki/worker-api.md](repo-wiki/worker-api.md) — Worker server REST API endpoints and schemas
+- [repo-wiki/registry-schema.md](repo-wiki/registry-schema.md) — JSON registry file schemas and examples
+- [repo-wiki/data-flow.md](repo-wiki/data-flow.md) — Data flow, result file formats, cache mechanism
+- [repo-wiki/module-index.md](repo-wiki/module-index.md) — Python module index, key classes and functions
+- [repo-wiki/development.md](repo-wiki/development.md) — Build, install, and development guide
+
+## Runtime Requirements
+
+| Component | Python | CANN | torch/torch_npu | Hardware |
+|-----------|--------|------|-----------------|----------|
+| CLI Client | >=3.10 | — | — | Any |
+| Worker Server | >=3.10 | ASCEND_HOME_PATH set | Required | Ascend 910B |
+
+## Dependencies
+
+- **Core** (client): `httpx>=0.24`
+- **Server extra**: `fastapi>=0.100`, `uvicorn>=0.23`, `pandas>=1.5`
+- **Dev extra**: `ruff>=0.4`

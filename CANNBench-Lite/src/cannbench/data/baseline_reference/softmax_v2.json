@@ -1,0 +1,72 @@
+{
+  "operator_name": "softmax_v2",
+  "base_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel",
+  "files": {
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel/pybind11.cpp",
+      "size_bytes": 1927,
+      "md5": "40133baeae1c23fca2daf9136ed0a668",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"softmax_v2_tiling.h\"\nextern \"C\" void softmax_v2_do_fp32(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\nextern \"C\" void softmax_v2_do_fp16(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\nnamespace softmax_v2_ext {\nusing LF=void(*)(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\npybind11::tuple run_softmax_v2(const at::Tensor &x) {\n    TORCH_CHECK(x.dim()==4,\"x must be [B,H,S,S]\");\n    TORCH_CHECK(x.scalar_type()==at::kFloat||x.scalar_type()==at::kHalf,\"unsupported\");\n    TORCH_CHECK(x.is_contiguous(),\"must be contiguous\");\n    const auto B=static_cast<int32_t>(x.sizes()[0]), H=static_cast<int32_t>(x.sizes()[1]);\n    const auto S=static_cast<int32_t>(x.sizes()[2]);\n    const auto M=B*H*S, N=S;\n    const int32_t mNum=(M+DEFAULT_BLOCK_M-1)/DEFAULT_BLOCK_M;\n    const int32_t uc=std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES,mNum);\n    const int32_t tpc=(mNum+uc-1)/uc;\n    at::Tensor y=at::empty_like(x);\n    at::Tensor tc=at::empty({static_cast<long>(sizeof(SoftmaxV2KernelTiling))},at::device(at::kCPU).dtype(at::kByte));\n    auto *t=reinterpret_cast<SoftmaxV2KernelTiling*>(tc.data_ptr());\n    t->M=M; t->N=N; t->blockM=DEFAULT_BLOCK_M; t->usedCoreNum=uc; t->tasksPerCore=tpc;\n    auto tn=tc.to(at::kPrivateUse1);\n    auto stm=c10_npu::getCurrentNPUStream().stream(false);\n    LF l=nullptr;\n    if(x.scalar_type()==at::kFloat) l=softmax_v2_do_fp32;\n    else if(x.scalar_type()==at::kHalf) l=softmax_v2_do_fp16;\n    else TORCH_CHECK(false,\"unsupported\");\n    l(uc,stm,static_cast<uint8_t*>(const_cast<void*>(x.storage().data())),static_cast<uint8_t*>(const_cast<void*>(y.storage().data())),static_cast<uint8_t*>(const_cast<void*>(tn.storage().data())));\n    return pybind11::make_tuple(y);\n}}\nPYBIND11_MODULE(_softmax_v2_ext, m) { m.def(\"run_softmax_v2\",&softmax_v2_ext::run_softmax_v2,\"\"); }\n"
+    },
+    "softmax_v2_tiling.h": {
+      "path": "softmax_v2_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel/softmax_v2_tiling.h",
+      "size_bytes": 302,
+      "md5": "369b2138e2ad17839a14c413140e03cf",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef SOFTMAX_V2_TILING_H\n#define SOFTMAX_V2_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct SoftmaxV2KernelTiling { int32_t M; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore; };\n#endif\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel/CMakeLists.txt",
+      "size_bytes": 2682,
+      "md5": "da3cf319f0bafd9e4429128d01bad073",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"SOC\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"CANN\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)\nelse()\n    message(FATAL_ERROR \"ascendc_kernel_cmake not found\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC softmax_v2_fp32.cpp softmax_v2_fp16.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _softmax_v2_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel/kernel_common.h",
+      "size_bytes": 365,
+      "md5": "eafdc39ece1c3b0a85218a32de0b528f",
+      "extension": ".h",
+      "content": "#pragma once\n#include <cstddef>\n#include <cstdint>\n#include \"kernel_operator.h\"\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *tiling, GM_ADDR tilingGM) {\n    int32_t *dst = reinterpret_cast<int32_t *>(tiling);\n    auto *src = reinterpret_cast<__gm__ int32_t *>(tilingGM);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) dst[i] = src[i];\n}\n"
+    },
+    "softmax_v2_fp32.cpp": {
+      "path": "softmax_v2_fp32.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel/softmax_v2_fp32.cpp",
+      "size_bytes": 403,
+      "md5": "69b0c80ac8cee1caa60150d0258ae194",
+      "extension": ".cpp",
+      "content": "#include \"softmax_v2_kernel.h\"\nextern \"C\" __global__ __aicore__ void softmax_v2_custom_fp32(GM_ADDR x,GM_ADDR y,GM_ADDR t){\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    SoftmaxV2Kernel<float> k; k.Init(x,y,t,&p); k.Process();\n}\nextern \"C\" void softmax_v2_do_fp32(uint32_t d,void* s,uint8_t* x,uint8_t* y,uint8_t* t){\n    softmax_v2_custom_fp32<<<d,nullptr,s>>>(x,y,t);\n}\n"
+    },
+    "softmax_v2_fp16.cpp": {
+      "path": "softmax_v2_fp16.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel/softmax_v2_fp16.cpp",
+      "size_bytes": 402,
+      "md5": "48844f6e11dae7b6a5974a066ffe34e8",
+      "extension": ".cpp",
+      "content": "#include \"softmax_v2_kernel.h\"\nextern \"C\" __global__ __aicore__ void softmax_v2_custom_fp16(GM_ADDR x,GM_ADDR y,GM_ADDR t){\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    SoftmaxV2Kernel<half> k; k.Init(x,y,t,&p); k.Process();\n}\nextern \"C\" void softmax_v2_do_fp16(uint32_t d,void* s,uint8_t* x,uint8_t* y,uint8_t* t){\n    softmax_v2_custom_fp16<<<d,nullptr,s>>>(x,y,t);\n}\n"
+    },
+    "softmax_v2_kernel.h": {
+      "path": "softmax_v2_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/softmax_v2/kernel/softmax_v2_kernel.h",
+      "size_bytes": 4394,
+      "md5": "e91b5f9556e80e8e5219fb808aa173e9",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef SOFTMAX_V2_KERNEL_H\n#define SOFTMAX_V2_KERNEL_H\n#include <cmath>\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"softmax_v2_tiling.h\"\n\ntemplate <typename T>\nclass SoftmaxV2Kernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR tilingGM, AscendC::TPipe *pipe) {\n        CopyTiling(&tiling_, tilingGM);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(x), tiling_.M * tiling_.N);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(y), tiling_.M * tiling_.N);\n        if ASCEND_IS_AIV {\n            pipe_ = pipe; subBlockRows_ = tiling_.blockM / AscendC::GetSubBlockNum();\n            pipe_->InitBuffer(xInQ_, 1, tiling_.N * sizeof(T));\n            pipe_->InitBuffer(yOutQ_, 1, tiling_.N * sizeof(T));\n            if constexpr (!std::is_same_v<T, float>) {\n                pipe_->InitBuffer(workBuf_, tiling_.N * sizeof(float));\n            }\n        }\n    }\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int ci = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int si = AscendC::GetSubBlockIdx();\n            for (int li = 0; li < tiling_.tasksPerCore; ++li) {\n                const int bx = ci * tiling_.tasksPerCore + li;\n                if (bx >= BlockCount()) continue;\n                for (int r = 0; r < subBlockRows_; ++r) {\n                    const int ri = bx * tiling_.blockM + si * subBlockRows_ + r;\n                    if (ri < tiling_.M) ProcessRow(ri);\n                }\n            }\n        }\n    }\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (tiling_.M + tiling_.blockM - 1) / tiling_.blockM; }\n    __aicore__ inline void CopyIn(int32_t ri) {\n        xInQ_.AllocTensor<T>(xInL_); AscendC::DataCopy(xInL_, xGM_[ri * tiling_.N], tiling_.N); xInQ_.EnQue(xInL_);\n    }\n    __aicore__ inline void CopyOut(int32_t ri) {\n        yOutQ_.DeQue<T>(yOutL_); AscendC::DataCopy(yGM_[ri * tiling_.N], yOutL_, tiling_.N); yOutQ_.FreeTensor(yOutL_);\n    }\n    __aicore__ inline void ComputeRow(int32_t ri) {\n        xInQ_.DeQue<T>(xInL_); yOutQ_.AllocTensor<T>(yOutL_);\n\n        if constexpr (std::is_same_v<T, float>) {\n            auto data = xInL_.template ReinterpretCast<float>();\n            auto out  = yOutL_.template ReinterpretCast<float>();\n            // Find max\n            float maxVal = data(0);\n            for (int32_t i = 1; i < tiling_.N; ++i) { float v = data(i); if (v > maxVal) maxVal = v; }\n            // Copy data to out, subtract max\n            for (int32_t i = 0; i < tiling_.N; ++i) out(i) = data(i) - maxVal;\n            // Vector exp\n            AscendC::Exp(out, out, tiling_.N);\n            // Scalar sum\n            float sumVal = 0.0f;\n            for (int32_t i = 0; i < tiling_.N; ++i) sumVal += out(i);\n            // Vector divide by sum\n            float invSum = 1.0f / sumVal;\n            AscendC::Muls(out, out, invSum, tiling_.N);\n        } else {\n            auto data = workBuf_.Get<float>();\n            AscendC::Cast(data, xInL_, AscendC::RoundMode::CAST_NONE, tiling_.N);\n            AscendC::PipeBarrier<PIPE_V>();\n            // Find max\n            float maxVal = data(0);\n            for (int32_t i = 1; i < tiling_.N; ++i) { float v = data(i); if (v > maxVal) maxVal = v; }\n            // Subtract max via vector\n            AscendC::Adds(data, data, -maxVal, tiling_.N);\n            // Vector exp\n            AscendC::Exp(data, data, tiling_.N);\n            // Scalar sum\n            float sumVal = 0.0f;\n            for (int32_t i = 0; i < tiling_.N; ++i) sumVal += data(i);\n            // Vector divide by sum\n            float invSum = 1.0f / sumVal;\n            AscendC::Muls(data, data, invSum, tiling_.N);\n            // Cast back\n            AscendC::Cast(yOutL_, data, AscendC::RoundMode::CAST_NONE, tiling_.N);\n            AscendC::PipeBarrier<PIPE_V>();\n        }\n        yOutQ_.EnQue(yOutL_); xInQ_.FreeTensor(xInL_);\n    }\n    __aicore__ inline void ProcessRow(int ri) { CopyIn(ri); ComputeRow(ri); CopyOut(ri); }\nprivate:\n    SoftmaxV2KernelTiling tiling_{}; AscendC::TPipe *pipe_{}; int subBlockRows_{};\n    AscendC::GlobalTensor<T> xGM_, yGM_;\n    AscendC::TQue<AscendC::TPosition::VECIN,0> xInQ_; AscendC::TQue<AscendC::TPosition::VECOUT,0> yOutQ_;\n    AscendC::TBuf<AscendC::TPosition::VECCALC> workBuf_;\n    AscendC::LocalTensor<T> xInL_, yOutL_;\n};\n#endif\n"
+    }
+  },
+  "metadata": {
+    "total_files": 7,
+    "total_size_bytes": 10475,
+    "file_types": {
+      ".cpp": 3,
+      ".h": 3,
+      ".txt": 1
+    }
+  }
+}

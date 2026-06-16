@@ -1,0 +1,1422 @@
+{
+  "version": "2.0.0",
+  "description": "Lightweight NPU kernel benchmark registry for operator coverage, fusion coverage, and knowledge transfer validation.",
+  "hardware": "Ascend 910B",
+  "registry_goals": [
+    "cover representative operator families",
+    "cover base, simple fusion, and hard fusion operators",
+    "support optimization-oriented shape selection",
+    "separate main benchmark anchors from knowledge transfer probes"
+  ],
+  "model_sources": {
+    "qwen2.5_7b": {
+      "hidden_size": 3584,
+      "intermediate_size": 18944,
+      "num_heads": 28,
+      "num_kv_heads": 4,
+      "head_dim": 128,
+      "vocab_size": 152064
+    },
+    "qwen2.5_32b": {
+      "hidden_size": 5120,
+      "intermediate_size": 27648,
+      "num_heads": 40,
+      "num_kv_heads": 8,
+      "head_dim": 128,
+      "vocab_size": 152064
+    },
+    "qwen2.5_72b": {
+      "hidden_size": 8192,
+      "intermediate_size": 29568,
+      "num_heads": 64,
+      "num_kv_heads": 8,
+      "head_dim": 128,
+      "vocab_size": 152064
+    },
+    "deepseek_v3_dense": {
+      "hidden_size": 7168,
+      "intermediate_size": 18432,
+      "num_heads": 128,
+      "kv_lora_rank": 512,
+      "vocab_size": 129280
+    },
+    "deepseek_v3_expert": {
+      "hidden_size": 7168,
+      "intermediate_size": 2048,
+      "note": "per MoE expert FFN"
+    }
+  },
+  "schema": {
+    "operator_required_fields": [
+      "benchmark_role",
+      "benchmark_layer",
+      "category",
+      "pattern",
+      "ops_nn_path",
+      "torch_npu_api",
+      "input_format",
+      "dtypes",
+      "bottleneck_tags",
+      "shapes"
+    ],
+    "shape_required_fields": [
+      "id",
+      "shape_tier",
+      "params"
+    ]
+  },
+  "benchmark_sets": {
+    "main_benchmark": [
+      "gelu",
+      "layer_norm_v3",
+      "mat_mul_v3",
+      "conv2d_v2",
+      "gather_v2",
+      "add_layer_norm",
+      "gelu_mul",
+      "softmax_v2",
+      "swi_glu",
+      "masked_softmax_with_rel_pos_bias",
+      "add_rms_norm_quant"
+    ],
+    "transfer_probes": [
+      "relu",
+      "rms_norm",
+      "batch_mat_mul_v3",
+      "avg_pool2d",
+      "embedding_bag",
+      "add_rms_norm",
+      "ge_glu_v2",
+      "cross_entropy_loss",
+      "clipped_swiglu",
+      "scaled_masked_softmax_v2",
+      "add_rms_norm_dynamic_quant"
+    ],
+    "stretch_goals": [
+      "flash_attention_score"
+    ]
+  },
+  "operators": {
+    "gelu": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "foundation",
+      "category": "activation",
+      "pattern": "unary activation",
+      "ops_nn_path": "activation/gelu",
+      "torch_npu_api": "torch.nn.functional.gelu",
+      "description": "Foundation unary activation anchor for elementwise and approximate math tuning.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "memory_bound",
+        "elementwise",
+        "approx_math"
+      ],
+      "knowledge_targets": [
+        "relu"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 1024
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B_S": 4096,
+            "H": 8192
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B_S": 8192,
+            "H": 29568
+          },
+          "note": "large FFN-like row width stress"
+        }
+      ],
+      "baseline_reference": "baseline_reference/gelu.json"
+    },
+    "relu": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "foundation",
+      "category": "activation",
+      "pattern": "unary activation",
+      "ops_nn_path": "activation/relu",
+      "torch_npu_api": "torch.nn.functional.relu",
+      "description": "Simple elementwise transfer target for activation-family knowledge reuse.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "memory_bound",
+        "elementwise"
+      ],
+      "transfer_from": "gelu",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 1024
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "B_S": 8192,
+            "H": 8192
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/relu.json"
+    },
+    "layer_norm_v3": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "foundation",
+      "category": "normalization",
+      "pattern": "row-wise reduction + normalize",
+      "ops_nn_path": "norm/layer_norm_v3",
+      "torch_npu_api": "torch.nn.LayerNorm",
+      "description": "Foundation normalization anchor with strong reduction and vectorization characteristics.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "reduction",
+        "vectorization",
+        "tail_handling"
+      ],
+      "knowledge_targets": [
+        "rms_norm"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 1024
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "deepseek_v3_dense",
+          "params": {
+            "B_S": 4096,
+            "H": 7168
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B_S": 4096,
+            "H": 8192
+          }
+        },
+        {
+          "id": "S5",
+          "shape_tier": "edge",
+          "params": {
+            "B_S": 1024,
+            "H": 16384
+          },
+          "note": "long-row stress"
+        }
+      ],
+      "baseline_reference": "baseline_reference/layer_norm_v3.json"
+    },
+    "rms_norm": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "foundation",
+      "category": "normalization",
+      "pattern": "row-wise reduction + normalize",
+      "ops_nn_path": "norm/rms_norm",
+      "torch_npu_api": "torch_npu.npu_rms_norm",
+      "description": "Transfer target for row-wise reduction and norm-family knowledge reuse.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "reduction",
+        "vectorization",
+        "tail_handling"
+      ],
+      "transfer_from": "layer_norm_v3",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 1024
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "H": 7168
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "params": {
+            "B_S": 4096,
+            "H": 8192
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/rms_norm.json"
+    },
+    "mat_mul_v3": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "foundation",
+      "category": "matmul",
+      "pattern": "gemm-like",
+      "ops_nn_path": "matmul/mat_mul_v3",
+      "torch_npu_api": "torch.matmul",
+      "description": "Foundation GEMM anchor for TileLang-style schedule search and matmul-family tuning.",
+      "input_format": "A[M,K], B[K,N]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "compute_bound",
+        "tiling",
+        "layout",
+        "mapping"
+      ],
+      "knowledge_targets": [
+        "batch_mat_mul_v3"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "M": 512,
+            "K": 512,
+            "N": 512
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "M": 4096,
+            "K": 3584,
+            "N": 18944
+          },
+          "note": "FFN up-proj style"
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "qwen2.5_72b",
+          "params": {
+            "M": 4096,
+            "K": 8192,
+            "N": 29568
+          },
+          "note": "large FFN up-proj style"
+        },
+        {
+          "id": "S4",
+          "shape_tier": "edge",
+          "params": {
+            "M": 8192,
+            "K": 1024,
+            "N": 256
+          },
+          "note": "tall-skinny"
+        },
+        {
+          "id": "S5",
+          "shape_tier": "large",
+          "params": {
+            "M": 8192,
+            "K": 8192,
+            "N": 8192
+          },
+          "note": "square stress"
+        }
+      ],
+      "baseline_reference": "baseline_reference/mat_mul_v3.json"
+    },
+    "batch_mat_mul_v3": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "foundation",
+      "category": "matmul",
+      "pattern": "batched gemm-like",
+      "ops_nn_path": "matmul/batch_mat_mul_v3",
+      "torch_npu_api": "torch.bmm",
+      "description": "Transfer target for GEMM tiling, mapping, and layout knowledge reuse.",
+      "input_format": "A[B,M,K], B[B,K,N]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "compute_bound",
+        "tiling",
+        "layout",
+        "mapping"
+      ],
+      "transfer_from": "mat_mul_v3",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B": 8,
+            "M": 128,
+            "K": 128,
+            "N": 128
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B": 32,
+            "M": 128,
+            "K": 128,
+            "N": 128
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "params": {
+            "B": 16,
+            "M": 256,
+            "K": 128,
+            "N": 256
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "params": {
+            "B": 32,
+            "M": 512,
+            "K": 256,
+            "N": 512
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/batch_mat_mul_v3.json"
+    },
+    "conv2d_v2": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "foundation",
+      "category": "conv",
+      "pattern": "spatial cube compute",
+      "ops_nn_path": "conv/conv2d_v2",
+      "torch_npu_api": "torch.nn.functional.conv2d",
+      "description": "Foundation spatial compute anchor for cube-heavy and layout-sensitive tuning.",
+      "input_format": "X[N,C,H,W], W[Co,Ci,Kh,Kw]",
+      "dtypes": [
+        "float16"
+      ],
+      "bottleneck_tags": [
+        "cube",
+        "compute_bound",
+        "layout",
+        "spatial_tiling"
+      ],
+      "knowledge_targets": [
+        "avg_pool2d"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "N": 1,
+            "Ci": 64,
+            "Co": 64,
+            "H": 56,
+            "W": 56,
+            "Kh": 3,
+            "Kw": 3,
+            "stride": 1,
+            "padding": 1
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "N": 8,
+            "Ci": 128,
+            "Co": 256,
+            "H": 28,
+            "W": 28,
+            "Kh": 3,
+            "Kw": 3,
+            "stride": 1,
+            "padding": 1
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "N": 8,
+            "Ci": 512,
+            "Co": 512,
+            "H": 14,
+            "W": 14,
+            "Kh": 3,
+            "Kw": 3,
+            "stride": 1,
+            "padding": 1
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/conv2d_v2.json"
+    },
+    "avg_pool2d": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "foundation",
+      "category": "pooling",
+      "pattern": "spatial reduction",
+      "ops_nn_path": "pooling/avg_pool3_d",
+      "torch_npu_api": "torch.nn.AvgPool2d",
+      "description": "Transfer target for spatial tiling and memory/reduction knowledge reuse.",
+      "input_format": "X[N,C,H,W]",
+      "dtypes": [
+        "float32"
+      ],
+      "bottleneck_tags": [
+        "memory_bound",
+        "reduction",
+        "spatial_tiling"
+      ],
+      "transfer_from": "conv2d_v2",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "N": 1,
+            "C": 64,
+            "H": 56,
+            "W": 56,
+            "kernel": 2,
+            "stride": 2
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "N": 8,
+            "C": 256,
+            "H": 28,
+            "W": 28,
+            "kernel": 2,
+            "stride": 2
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "N": 8,
+            "C": 512,
+            "H": 14,
+            "W": 14,
+            "kernel": 2,
+            "stride": 2
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/avg_pool2d.json"
+    },
+    "gather_v2": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "foundation",
+      "category": "index",
+      "pattern": "irregular memory access",
+      "ops_nn_path": "index/gather_v2",
+      "torch_npu_api": "torch.gather",
+      "description": "Foundation irregular-memory anchor for index-family performance analysis.",
+      "input_format": "X[rows, dim], Index[num_indices]",
+      "dtypes": [
+        "float16",
+        "int32"
+      ],
+      "bottleneck_tags": [
+        "irregular_memory",
+        "cache_locality",
+        "memory_bound"
+      ],
+      "knowledge_targets": [
+        "embedding_bag"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "rows": 8192,
+            "dim": 128,
+            "num_indices": 1024
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "rows": 65536,
+            "dim": 256,
+            "num_indices": 4096
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "rows": 262144,
+            "dim": 512,
+            "num_indices": 8192
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/gather_v2.json"
+    },
+    "embedding_bag": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "foundation",
+      "category": "index",
+      "pattern": "irregular memory access + reduction",
+      "ops_nn_path": "index/embedding_bag",
+      "torch_npu_api": "torch.nn.functional.embedding_bag",
+      "description": "Transfer target for gather-like irregular memory plus aggregation behavior.",
+      "input_format": "Weight[vocab, dim], Index[num_indices], Offsets[num_bags]",
+      "dtypes": [
+        "float16",
+        "int32"
+      ],
+      "bottleneck_tags": [
+        "irregular_memory",
+        "cache_locality",
+        "reduction"
+      ],
+      "transfer_from": "gather_v2",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "vocab": 8192,
+            "dim": 128,
+            "num_indices": 1024,
+            "num_bags": 64
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "vocab": 65536,
+            "dim": 256,
+            "num_indices": 4096,
+            "num_bags": 256
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "vocab": 262144,
+            "dim": 512,
+            "num_indices": 8192,
+            "num_bags": 512
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/embedding_bag.json"
+    },
+    "add_layer_norm": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "fusion",
+      "category": "normalization",
+      "pattern": "add + layer_norm",
+      "ops_nn_path": "norm/add_layer_norm",
+      "torch_npu_api": "torch_npu.npu_add_layer_norm",
+      "description": "Canonical transformer residual fusion operator.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "memory_bound",
+        "reduction"
+      ],
+      "knowledge_targets": [
+        "add_rms_norm"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "qwen2.5_32b",
+          "params": {
+            "B_S": 4096,
+            "H": 5120
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B_S": 4096,
+            "H": 8192
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/add_layer_norm.json"
+    },
+    "add_rms_norm": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "fusion",
+      "category": "normalization",
+      "pattern": "add + rms_norm",
+      "ops_nn_path": "norm/add_rms_norm",
+      "torch_npu_api": "torch_npu.npu_add_rms_norm",
+      "description": "Residual fusion transfer target within the normalization family.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "memory_bound",
+        "reduction"
+      ],
+      "transfer_from": "add_layer_norm",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "B_S": 4096,
+            "H": 8192
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/add_rms_norm.json"
+    },
+    "gelu_mul": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "fusion",
+      "category": "activation",
+      "pattern": "gelu + mul",
+      "ops_nn_path": "activation/gelu_mul",
+      "torch_npu_api": "torch_npu.npu_gelu_mul",
+      "description": "Simple gated activation fusion operator for FFN-like patterns.",
+      "input_format": "[B*S, 2*intermediate]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "split",
+        "vectorization",
+        "intermediate_write"
+      ],
+      "knowledge_targets": [
+        "ge_glu_v2"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "source": "deepseek_v3_expert",
+          "params": {
+            "B_S": 1024,
+            "two_inter": 4096
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 37888
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "deepseek_v3_dense",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 36864
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 59136
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/gelu_mul.json"
+    },
+    "ge_glu_v2": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "fusion",
+      "category": "activation",
+      "pattern": "gelu + glu",
+      "ops_nn_path": "activation/ge_glu_v2",
+      "torch_npu_api": "torch_npu.npu_geglu",
+      "description": "Harder gated activation fusion target used for transfer validation.",
+      "input_format": "[B*S, 2*intermediate]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "split",
+        "vectorization",
+        "intermediate_write"
+      ],
+      "transfer_from": "gelu_mul",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "two_inter": 4096
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 37888
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 59136
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/ge_glu_v2.json"
+    },
+    "softmax_v2": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "fusion",
+      "category": "activation",
+      "pattern": "online softmax",
+      "ops_nn_path": "activation/softmax_v2",
+      "torch_npu_api": "torch.nn.functional.softmax",
+      "description": "Canonical reduction-heavy operator and attention softmax anchor.",
+      "input_format": "[B, heads, S, S]",
+      "dtypes": [
+        "float16"
+      ],
+      "bottleneck_tags": [
+        "reduction",
+        "exp",
+        "normalize",
+        "shape_sensitive"
+      ],
+      "knowledge_targets": [
+        "cross_entropy_loss"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B": 1,
+            "heads": 16,
+            "S": 512
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B": 1,
+            "heads": 28,
+            "S": 2048
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B": 1,
+            "heads": 64,
+            "S": 2048
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "params": {
+            "B": 1,
+            "heads": 28,
+            "S": 4096
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/softmax_v2.json"
+    },
+    "cross_entropy_loss": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "fusion",
+      "category": "loss",
+      "pattern": "log_softmax + nll_loss",
+      "ops_nn_path": "loss/cross_entropy_loss",
+      "torch_npu_api": "torch.nn.functional.cross_entropy",
+      "description": "Loss-family transfer target related to softmax-style reduction knowledge.",
+      "input_format": "[B*S, V]",
+      "dtypes": [
+        "float16"
+      ],
+      "bottleneck_tags": [
+        "reduction",
+        "exp",
+        "normalize",
+        "large_vocab"
+      ],
+      "transfer_from": "softmax_v2",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "V": 32768
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "deepseek_v3_dense",
+          "params": {
+            "B_S": 2048,
+            "V": 129280
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B_S": 4096,
+            "V": 152064
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/cross_entropy_loss.json"
+    },
+    "swi_glu": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "challenge",
+      "category": "activation",
+      "pattern": "split + silu + mul",
+      "ops_nn_path": "activation/swi_glu",
+      "torch_npu_api": "torch_npu.npu_swiglu",
+      "description": "High-value FFN fusion operator and challenge benchmark target.",
+      "input_format": "[B*S, 2*intermediate]",
+      "dtypes": [
+        "float16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "split",
+        "memory_traffic",
+        "scalar_overhead"
+      ],
+      "knowledge_targets": [
+        "clipped_swiglu"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "source": "deepseek_v3_expert",
+          "params": {
+            "B_S": 1024,
+            "two_inter": 4096
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 37888
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "deepseek_v3_dense",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 36864
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 59136
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/swi_glu.json"
+    },
+    "clipped_swiglu": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "challenge",
+      "category": "activation",
+      "pattern": "split + silu + mul + clip",
+      "ops_nn_path": "activation/clipped_swiglu",
+      "torch_npu_api": null,
+      "description": "Harder FFN-fusion transfer target with an extra clipping stage.",
+      "input_format": "[B*S, 2*intermediate]",
+      "dtypes": [
+        "float16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "split",
+        "memory_traffic",
+        "scalar_overhead"
+      ],
+      "transfer_from": "swi_glu",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "two_inter": 4096
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 37888
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "B_S": 4096,
+            "two_inter": 59136
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/clipped_swiglu.json"
+    },
+    "masked_softmax_with_rel_pos_bias": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "challenge",
+      "category": "normalization",
+      "pattern": "scale + mask + position_bias + softmax",
+      "ops_nn_path": "norm/masked_softmax_with_rel_pos_bias",
+      "torch_npu_api": "torch_npu.npu_masked_softmax_with_rel_pos_bias",
+      "description": "Representative attention softmax fusion operator with strong shape sensitivity.",
+      "input_format": "[B, W, N, S1, S2]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "reduction",
+        "mask",
+        "shape_sensitive"
+      ],
+      "knowledge_targets": [
+        "scaled_masked_softmax_v2"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B": 2,
+            "W": 1,
+            "N": 16,
+            "S1": 512,
+            "S2": 512
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B": 4,
+            "W": 1,
+            "N": 32,
+            "S1": 1024,
+            "S2": 1024
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "B": 4,
+            "W": 1,
+            "N": 32,
+            "S1": 2048,
+            "S2": 2048
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "edge",
+          "params": {
+            "B": 4,
+            "W": 4,
+            "N": 16,
+            "S1": 1024,
+            "S2": 1024
+          },
+          "note": "multi-window case"
+        }
+      ],
+      "baseline_reference": "baseline_reference/masked_softmax_with_rel_pos_bias.json"
+    },
+    "scaled_masked_softmax_v2": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "challenge",
+      "category": "vfusion",
+      "pattern": "scale + mask + softmax",
+      "ops_nn_path": "vfusion/scaled_masked_softmax_v2",
+      "torch_npu_api": "torch_npu.npu_scaled_masked_softmax",
+      "description": "Transfer target for attention softmax fusion without relative position bias.",
+      "input_format": "[B, N, S, S]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "reduction",
+        "mask",
+        "shape_sensitive"
+      ],
+      "transfer_from": "masked_softmax_with_rel_pos_bias",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B": 2,
+            "N": 16,
+            "S": 512
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B": 4,
+            "N": 32,
+            "S": 1024
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "large",
+          "params": {
+            "B": 4,
+            "N": 32,
+            "S": 2048
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/scaled_masked_softmax_v2.json"
+    },
+    "add_rms_norm_quant": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "challenge",
+      "category": "normalization",
+      "pattern": "add + rms_norm + quantize",
+      "ops_nn_path": "norm/add_rms_norm_quant",
+      "torch_npu_api": "torch_npu.npu_add_rms_norm_quant",
+      "description": "Quantized fused residual normalization anchor for inference-style tuning.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "reduction",
+        "quantization",
+        "memory_traffic"
+      ],
+      "knowledge_targets": [
+        "add_rms_norm_dynamic_quant"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "source": "deepseek_v3_dense",
+          "params": {
+            "B_S": 4096,
+            "H": 7168
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "source": "qwen2.5_72b",
+          "params": {
+            "B_S": 4096,
+            "H": 8192
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/add_rms_norm_quant.json"
+    },
+    "add_rms_norm_dynamic_quant": {
+      "benchmark_role": "transfer_probe",
+      "benchmark_layer": "challenge",
+      "category": "normalization",
+      "pattern": "add + rms_norm + dynamic quantize",
+      "ops_nn_path": "norm/add_rms_norm_dynamic_quant",
+      "torch_npu_api": "torch_npu.npu_add_rms_norm_dynamic_quant",
+      "description": "Dynamic quantization transfer target within the same fused residual-normalization family.",
+      "input_format": "[B*S, H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "fusion",
+        "reduction",
+        "dynamic_quantization",
+        "memory_traffic"
+      ],
+      "transfer_from": "add_rms_norm_quant",
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "small",
+          "params": {
+            "B_S": 1024,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S2",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "H": 3584
+          }
+        },
+        {
+          "id": "S3",
+          "shape_tier": "main",
+          "params": {
+            "B_S": 4096,
+            "H": 7168
+          }
+        },
+        {
+          "id": "S4",
+          "shape_tier": "large",
+          "params": {
+            "B_S": 4096,
+            "H": 8192
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/add_rms_norm_dynamic_quant.json"
+    },
+    "flash_attention_score": {
+      "benchmark_role": "anchor",
+      "benchmark_layer": "stretch",
+      "category": "attention",
+      "pattern": "full attention fusion",
+      "ops_nn_path": null,
+      "ops_transformer_path": "attention/flash_attention_score",
+      "torch_npu_api": "torch_npu.npu_fusion_attention",
+      "description": "Stretch-goal attention operator kept outside the first lightweight benchmark version.",
+      "input_format": "Q[B,S,H], K[B,S_kv,H], V[B,S_kv,H]",
+      "dtypes": [
+        "float16",
+        "bfloat16"
+      ],
+      "bottleneck_tags": [
+        "cube",
+        "softmax",
+        "pipeline",
+        "layout"
+      ],
+      "status": "stretch_goal",
+      "blockers": [
+        "requires Cube-capable DSL path and dedicated attention runner"
+      ],
+      "shapes": [
+        {
+          "id": "S1",
+          "shape_tier": "main",
+          "source": "qwen2.5_7b",
+          "params": {
+            "B": 1,
+            "S": 2048,
+            "S_kv": 2048,
+            "num_heads": 28,
+            "num_kv_heads": 4,
+            "head_dim": 128
+          }
+        }
+      ],
+      "baseline_reference": "baseline_reference/flash_attention_score.json"
+    }
+  }
+}

@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cannbench-lite"
+version = "0.1.0"
+description = "Lightweight NPU operator benchmark CLI and remote worker toolkit"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "CANNBench Contributors" },
+]
+keywords = ["npu", "benchmark", "ascend", "cann"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Benchmark",
+]
+
+dependencies = [
+    "httpx>=0.24",
+]
+
+[project.optional-dependencies]
+server = [
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+    "pandas>=1.5",
+]
+mcp = [
+    "modelcontextprotocol>=1.0.0",
+]
+dev = [
+    "ruff>=0.4",
+]
+
+[project.scripts]
+cannbench-lite = "cannbench.cli:main"
+cannbench-worker = "cannbench.remote.worker_server:main"
+cannbench-mcp = "cannbench.mcp_server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"cannbench.data" = [
+    "registry/*.json",
+    "assets/*.py",
+    "assets/shared/*.py",
+    "assets/template/**/*",
+    "baseline_reference/*.json",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120

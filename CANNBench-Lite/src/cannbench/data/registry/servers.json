@@ -1,0 +1,13 @@
+{
+  "default_server": "910b",
+  "servers": {
+    "910b": {
+      "worker_url": "http://127.0.0.1:9027",
+      "ssh_host": "910b",
+      "hardware": "Ascend910B",
+      "default_device": "7",
+      "client_id": "gjz_910b",
+      "notes": "Current primary remote worker. CLI can override device via --device."
+    }
+  }
+}

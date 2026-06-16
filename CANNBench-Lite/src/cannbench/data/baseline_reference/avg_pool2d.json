@@ -1,0 +1,64 @@
+{
+  "operator_name": "avg_pool2d",
+  "base_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d",
+  "kernel_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d/kernel",
+  "files": {
+    "ap_kernel.h": {
+      "path": "ap_kernel.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d/kernel/ap_kernel.h",
+      "size_bytes": 2208,
+      "md5": "04e4a56351baeb8a7a1196701e60d4b5",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef AP_KERNEL_H\n#define AP_KERNEL_H\n#include \"kernel_operator.h\"\n#include \"kernel_common.h\"\n#include \"ap_tiling.h\"\n\ntemplate <typename T>\nclass APKernel {\npublic:\n    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR tilingGM, AscendC::TPipe *pipe) {\n        CopyTiling(&tiling_, tilingGM);\n        xGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(x), tiling_.inTotal);\n        yGM_.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(y), tiling_.M * tiling_.N);\n        if ASCEND_IS_AIV {\n            pipe_ = pipe; subBlockRows_ = tiling_.blockM / AscendC::GetSubBlockNum();\n            // No queues needed — use scalar GetValue/SetValue\n        }\n    }\n    __aicore__ inline void Process() {\n        if ASCEND_IS_AIV {\n            const int ci = AscendC::GetBlockIdx() / AscendC::GetSubBlockNum();\n            const int si = AscendC::GetSubBlockIdx();\n            for (int li = 0; li < tiling_.tasksPerCore; ++li) {\n                const int bx = ci * tiling_.tasksPerCore + li;\n                if (bx >= BlockCount()) continue;\n                for (int r = 0; r < subBlockRows_; ++r) {\n                    const int ri = bx * tiling_.blockM + si * subBlockRows_ + r;\n                    if (ri < tiling_.M) ProcessRow(ri);\n                }\n            }\n        }\n    }\nprivate:\n    __aicore__ inline int32_t BlockCount() const { return (tiling_.M + tiling_.blockM - 1) / tiling_.blockM; }\n    __aicore__ inline void ProcessRow(int32_t ri) {\n        int32_t c = ri / tiling_.Ho, h = ri % tiling_.Ho;\n        int32_t inChBase = c * tiling_.inChStride;\n        int32_t outBase = (c * tiling_.Ho + h) * tiling_.N;\n        for (int32_t w = 0; w < tiling_.N; ++w) {\n            float sum = xGM_.GetValue(inChBase + (h*2)*tiling_.W + w*2)\n                      + xGM_.GetValue(inChBase + (h*2)*tiling_.W + w*2 + 1)\n                      + xGM_.GetValue(inChBase + (h*2+1)*tiling_.W + w*2)\n                      + xGM_.GetValue(inChBase + (h*2+1)*tiling_.W + w*2 + 1);\n            yGM_.SetValue(outBase + w, static_cast<T>(sum * 0.25f));\n        }\n    }\nprivate:\n    APKernelTiling tiling_{}; AscendC::TPipe *pipe_{}; int subBlockRows_{};\n    AscendC::GlobalTensor<T> xGM_, yGM_;\n};\n#endif\n"
+    },
+    "pybind11.cpp": {
+      "path": "pybind11.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d/kernel/pybind11.cpp",
+      "size_bytes": 1946,
+      "md5": "bced1d21d496f1bca1e9e871f44a24b3",
+      "extension": ".cpp",
+      "content": "#include <pybind11/pybind11.h>\n#include <torch/extension.h>\n#include \"acl/acl.h\"\n#include \"torch_npu/csrc/core/npu/NPUStream.h\"\n#include \"ap_tiling.h\"\nextern \"C\" void ap_do_fp32(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\nnamespace ap_ext {\nusing LF=void(*)(uint32_t,void*,uint8_t*,uint8_t*,uint8_t*);\npybind11::tuple run_avg_pool2d(const at::Tensor &x, int64_t kH, int64_t kW, int64_t stride, int64_t pad) {\n    TORCH_CHECK(kH==2&&kW==2&&stride==2&&pad==0,\"only k=2,s=2,p=0 supported\");\n    TORCH_CHECK(x.dim()==4&&x.scalar_type()==at::kFloat,\"[N,C,H,W] fp32 only\");\n    TORCH_CHECK(x.is_contiguous(),\"must be contiguous\");\n    const auto N=x.sizes()[0], C=x.sizes()[1], H=x.sizes()[2], W=x.sizes()[3];\n    const auto Ho=H/2, Wo=W/2;\n    const auto M=static_cast<int32_t>(N*C*Ho);\n    const auto mNum=(M+DEFAULT_BLOCK_M-1)/DEFAULT_BLOCK_M;\n    const auto uc=std::min<int32_t>(DEFAULT_NUM_PHYSICAL_CORES,mNum);\n    const auto tpc=(mNum+uc-1)/uc;\n    at::Tensor y=at::empty({N,C,Ho,Wo},x.options());\n    at::Tensor tc=at::empty({static_cast<long>(sizeof(APKernelTiling))},at::device(at::kCPU).dtype(at::kByte));\n    auto *t=reinterpret_cast<APKernelTiling*>(tc.data_ptr());\n    t->M=M; t->N=static_cast<int32_t>(Wo); t->blockM=DEFAULT_BLOCK_M; t->usedCoreNum=uc; t->tasksPerCore=tpc;\n    t->W=static_cast<int32_t>(W); t->Ho=static_cast<int32_t>(Ho);\n    t->inChStride=static_cast<int32_t>(H*W); t->outChStride=static_cast<int32_t>(Ho*Wo);\n    t->inTotal=static_cast<int32_t>(N*C*H*W);\n    auto tn=tc.to(at::kPrivateUse1);\n    auto stm=c10_npu::getCurrentNPUStream().stream(false);\n    ap_do_fp32(uc,stm,\n        static_cast<uint8_t*>(const_cast<void*>(x.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(y.storage().data())),\n        static_cast<uint8_t*>(const_cast<void*>(tn.storage().data())));\n    return pybind11::make_tuple(y);\n}}\nPYBIND11_MODULE(_avg_pool2d_ext, m) { m.def(\"run_avg_pool2d\",&ap_ext::run_avg_pool2d,\"\"); }\n"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d/kernel/CMakeLists.txt",
+      "size_bytes": 2484,
+      "md5": "cfadf2cdd88b2d48f448701fc801a3e1",
+      "extension": ".txt",
+      "content": "cmake_minimum_required(VERSION 3.16.0)\nproject(Ascend_C)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(SOC_VERSION \"${SOC_VERSION}\" CACHE STRING \"SOC\")\nset(ASCEND_CANN_PACKAGE_PATH \"${ASCEND_CANN_PACKAGE_PATH}\" CACHE PATH \"CANN\")\nset(RUN_MODE \"npu\" CACHE STRING \"run mode\")\nset(CMAKE_BUILD_TYPE \"Debug\" CACHE STRING \"Build type\" FORCE)\nset(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}/build\")\nif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)\nelseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\n    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)\nelse()\n    message(FATAL_ERROR \"ascendc_kernel_cmake not found\")\nendif()\ninclude(${ASCENDC_CMAKE_DIR}/ascendc.cmake)\nascendc_library(kernels STATIC ap_fp32.cpp)\nascendc_include_directories(kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ASCEND_CANN_PACKAGE_PATH}/include ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/runtime ${ASCEND_CANN_PACKAGE_PATH}/include/experiment/msprof)\nadd_library(pybind11_lib SHARED pybind11.cpp)\ntarget_link_libraries(pybind11_lib PRIVATE kernels torch_npu m dl)\nexecute_process(COMMAND python3 -c \"import os; import torch; print(os.path.dirname(torch.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_PATH)\nset(ENV{ASCEND_HOME_PATH} ${ASCEND_CANN_PACKAGE_PATH})\nexecute_process(COMMAND python3 -c \"import os; import torch_npu; print(os.path.dirname(torch_npu.__file__))\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE TORCH_NPU_PATH)\ntarget_link_directories(pybind11_lib PRIVATE ${TORCH_PATH}/lib ${TORCH_NPU_PATH}/lib)\ntarget_include_directories(pybind11_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TORCH_NPU_PATH}/include ${TORCH_PATH}/include ${TORCH_PATH}/include/torch/csrc/api/include)\nset(PYBIND11_INC \"-I/usr/local/python3.11.14/include/python3.11 -I/usr/local/python3.11.14/lib/python3.11/site-packages/torch/include\")\nstring(REPLACE \" \" \";\" PYBIND11_INC ${PYBIND11_INC})\ntarget_compile_options(pybind11_lib PRIVATE ${PYBIND11_INC} -D_GLIBCXX_USE_CXX11_ABI=1)\nexecute_process(COMMAND python3 -c \"import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')\" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXTENSION_SUFFIX)\nset_target_properties(pybind11_lib PROPERTIES OUTPUT_NAME _avg_pool2d_ext PREFIX \"\" SUFFIX \"${PYTHON_EXTENSION_SUFFIX}\")\n"
+    },
+    "kernel_common.h": {
+      "path": "kernel_common.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d/kernel/kernel_common.h",
+      "size_bytes": 346,
+      "md5": "a85c3f7755da385b9b124d2420424a1b",
+      "extension": ".h",
+      "content": "#pragma once\n#include <cstdint>\n#include \"kernel_operator.h\"\ntemplate <typename T>\n__aicore__ inline void CopyTiling(T *tiling, GM_ADDR tilingGM) {\n    int32_t *dst = reinterpret_cast<int32_t *>(tiling);\n    auto *src = reinterpret_cast<__gm__ int32_t *>(tilingGM);\n    for (size_t i = 0; i < sizeof(T) / sizeof(int32_t); ++i) dst[i] = src[i];\n}\n"
+    },
+    "ap_tiling.h": {
+      "path": "ap_tiling.h",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d/kernel/ap_tiling.h",
+      "size_bytes": 364,
+      "md5": "049726d4ed2da7906c1a3d3b579d760c",
+      "extension": ".h",
+      "content": "#pragma once\n#ifndef AP_TILING_H\n#define AP_TILING_H\n#include <cstdint>\nconstexpr int32_t DEFAULT_BLOCK_M = 128;\nconstexpr int32_t DEFAULT_NUM_PHYSICAL_CORES = 32;\nstruct APKernelTiling { int32_t M; int32_t N; int32_t blockM; int32_t usedCoreNum; int32_t tasksPerCore;\n    int32_t W; int32_t Ho; int32_t inChStride; int32_t outChStride; int32_t inTotal; };\n#endif\n"
+    },
+    "ap_fp32.cpp": {
+      "path": "ap_fp32.cpp",
+      "full_path": "/home/hrl/AscendOpGenAgent/CANNBench-Lite/src/cannbench/data/baseline_reference/avg_pool2d/kernel/ap_fp32.cpp",
+      "size_bytes": 364,
+      "md5": "dfa58b7c7e60e644a32305fa12512c9c",
+      "extension": ".cpp",
+      "content": "#include \"ap_kernel.h\"\nextern \"C\" __global__ __aicore__ void ap_custom_fp32(GM_ADDR x,GM_ADDR y,GM_ADDR t){\n    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2); AscendC::TPipe p;\n    APKernel<float> k; k.Init(x,y,t,&p); k.Process();\n}\nextern \"C\" void ap_do_fp32(uint32_t d,void* s,uint8_t* x,uint8_t* y,uint8_t* t){\n    ap_custom_fp32<<<d,nullptr,s>>>(x,y,t);\n}\n"
+    }
+  },
+  "metadata": {
+    "total_files": 6,
+    "total_size_bytes": 7712,
+    "file_types": {
+      ".h": 3,
+      ".cpp": 2,
+      ".txt": 1
+    }
+  }
+}
