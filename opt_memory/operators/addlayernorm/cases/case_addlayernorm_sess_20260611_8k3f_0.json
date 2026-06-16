@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_addlayernorm_sess_20260611_8k3f_0",
+  "kernel": {
+    "name": "addlayernorm",
+    "category": "normalization",
+    "compute_type": "compute_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "reduce_sum_vectorize",
+    "title": "ReduceSum替代标量累加：S3 25x加速超越PyTorch",
+    "description": "标量累加→ReduceSum AR：S3 25x加速(6.87→0.27ms)超越PyTorch 1.17x",
+    "reason": "标量循环在Vector处理器上极慢，ReduceSum利用硬件矢量归约单元单次完成整个维度累加",
+    "opt_layer": "instruction",
+    "target_bottleneck": "scalar_accumulation",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[M,N]=[1024..4096, 512..3584], ReduceSum AR模式",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 25.1
+  },
+  "chain": {
+    "session_id": "sess_addln_20260611_8k3f",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "reduce_sum_vectorize"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-11T19:56:50Z"
+  }
+}

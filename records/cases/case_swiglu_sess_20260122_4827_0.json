@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_swiglu_sess_20260122_4827_0",
+  "kernel": {
+    "name": "swiglu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "Fp16 direct. Exp sigmoid: Muls(-1)+Exp+Adds(1)+Reciprocal+Mul+Mul. Chunk=256. Workspace=half."
+  },
+  "thought": {
+    "id": "fp16_direct_exp_silu_chunk256",
+    "title": "swiglu Fp16 Direct Exp Silu Chunk256",
+    "description": "Eliminated Cast half↔float per chunk, replaced tanh-based sigmoid with Exp-based sigmoid, increased chunk size 64→256, switched workspace float→half",
+    "reason": "CHANGE 1 [instruction/FP16Direct]: Removed AscendC::Cast(half→float) and Cast(float→half) per chunk. All 6 compute ops operate on half directly. Saves 2 Cast instructions per N_TILE=256 chunk.\n\nCHANGE 2 [compute/ExpSigmoid]: Replaced tanh-based sigmoid (Muls(0.5)+Tanh+Adds(1)+Muls(0.5)) with Exp-based sigmoid (Muls(-1)+Exp+Adds(1)+Reciprocal). Both 4 ops for sigmoid but Exp/Reciprocal has better throughput on Ascend 910B.\n\nCHANGE 3 [tiling/Chunk256]: SWI_GLU_CHUNK 64→256 (4x). Better utilization of 256-wide vector units, reducing loop overhead.\n\nCHANGE 4 [memory/HalfWorkspace]: TBuf sizeof(T)=2 vs sizeof(float)=4. 5×256×2=2.5KB (half) vs 3×64×4=0.75KB (float). Larger chunk + half = manageable UB pressure.",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[M,2*inter] fp16, M=1024-4096, inter=2048-29568",
+    "dtype": "float16",
+    "data_tags": "fusion,split,elementwise",
+    "task_tags": "llm_ffn,swiglu"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 1.4442,
+    "metric_changes": {
+      "task_duration_us": {
+        "before": 2136,
+        "after": 1479
+      }
+    }
+  },
+  "chain": {
+    "session_id": "sess_20260122_4827",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B3",
+    "agent": "ascend-kernel-kope",
+    "iteration": 0,
+    "dsl_before": "Cast half→float. Tanh sigmoid: Muls(0.5)+Tanh+Adds(1)+Muls(0.5). Chunk=64. Workspace=float.",
+    "dsl_after": "Fp16 direct. Exp sigmoid: Muls(-1)+Exp+Adds(1)+Reciprocal+Mul+Mul. Chunk=256. Workspace=half.",
+    "profiling_path": "",
+    "created_at": "2026-06-14T18:46:21Z"
+  }
+}

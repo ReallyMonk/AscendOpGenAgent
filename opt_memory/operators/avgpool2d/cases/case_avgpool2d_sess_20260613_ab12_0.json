@@ -1,0 +1,58 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_avgpool2d_sess_20260613_ab12_0",
+  "kernel": {
+    "name": "avgpool2d",
+    "category": "other",
+    "compute_type": "memory_bound",
+    "path": "avgpool2d/kernel/avgpool2d_kernel.h"
+  },
+  "thought": {
+    "id": "avgpool2d_vectorized_simd",
+    "title": "avgpool2d 8-element Vectorized SIMD Implementation",
+    "description": "Implemented 8-element vectorized Load/Store with Add/Muls for SIMD processing. Baseline used scalar GetValue/SetValue for each element. Vectorized version processes 8 outputs simultaneously using Vector unit.",
+    "reason": "Memory-bound pooling operation benefits significantly from vectorization. 8-element SIMD reduces memory access overhead and enables better Vector unit utilization.",
+    "opt_layer": "instruction",
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[N,C,H,W] with H_out=H/2, W_out=W/2",
+    "dtype": "float32",
+    "data_tags": [
+      "avgpool2d",
+      "k2s2p0"
+    ],
+    "task_tags": [
+      "pooling",
+      "avg_pool",
+      "ascendc",
+      "vectorization"
+    ]
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_avgpool2d_20260613_ab12",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "avgpool2d_vectorized_simd"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "ascend-kernel-kope",
+    "iteration": 0,
+    "dsl_before": "Scalar GetValue/SetValue; element-by-element 2x2 window sum",
+    "dsl_after": "Vector Load/Store + Add/Muls for 8-element SIMD; UB buffers for accumulation staging",
+    "profiling_path": "",
+    "created_at": "2026-06-13T14:24:59Z"
+  }
+}

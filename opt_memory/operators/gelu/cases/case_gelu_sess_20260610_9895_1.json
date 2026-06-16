@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260610_9895_1",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "n_tiling_large_rows",
+    "title": "N-Tiling Enables Large Row Width: 2.9x Speedup at 29568",
+    "description": "Added N-dimension tiling when row width exceeds UB budget. TILE_N_MAX=8192 splits large rows (29568) into 4 tiles. Each tile: 8K*12B=96KB UB (inputs+cast+compute), well within 256KB. This eliminated UB overflow crash on S4. The tiling overhead (~4 iterations per row) is offset by the inherent compute efficiency for wide rows.",
+    "reason": "Without N-tiling, the kernel crashes with \"ub address out of bounds\" on N=29568 because 4 buffers × 29568 elements × (2+4) bytes = ~295KB exceeds 256KB UB. The tiled approach trades iteration count for correctness and safety.",
+    "opt_layer": "tiling",
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B*S=8192, H=29568] (S4: large FFN-like)",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 2.9
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 1,
+    "prev_thought_id": "baseline_001",
+    "prev_case_id": "case_gelu_sess_20260610_9895_0",
+    "full_sequence_hint": [
+      "baseline_001",
+      "n_tiling_large_rows"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-10T06:12:57Z"
+  }
+}

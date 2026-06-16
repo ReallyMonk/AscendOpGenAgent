@@ -1,0 +1,11 @@
+{
+  "case_ge_glu_v2_sess_20260615_8472_0": {
+    "path": "case_ge_glu_v2_sess_20260615_8472_0.json",
+    "thought_id": "chunk_512_x2buf",
+    "thought_title": "GG_CHUNK 64→512 + x2备份缓冲区 → 3.13x加速",
+    "label": "effective",
+    "session_id": "sess_ge_glu_v2_20260127_8472",
+    "step_index": 0,
+    "created_at": "2026-06-15T16:09:41Z"
+  }
+}

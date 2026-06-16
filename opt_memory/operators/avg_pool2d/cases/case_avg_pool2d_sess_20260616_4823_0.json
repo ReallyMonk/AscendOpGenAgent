@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_avg_pool2d_sess_20260616_4823_0",
+  "kernel": {
+    "name": "avg_pool2d",
+    "category": "reduction",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "pooling_nhwc_vectorized_v1",
+    "title": "avg_pool2d NHWC向量化优化",
+    "description": "NCHW→NHWC layout转换 + DataCopy向量化加载 + Add/Muls向量化计算，替代baseline标量GetValue/SetValue。TQue depth=1管理UB缓冲区，PipeBarrier保证同步",
+    "reason": "池化算子channel维度向量化是核心优化方向。NHWC layout使C个通道内存连续，可一次DataCopy加载整行，配合向量化Add/Muls大幅减少指令数",
+    "opt_layer": "tiling",
+    "target_bottleneck": "memory_bound, launch_overhead",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "NCHW->NHWC, C=64/256/512, k=2,s=2,p=0, Ho=H/2,Wo=W/2",
+    "dtype": "float32",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.76
+  },
+  "chain": {
+    "session_id": "sess_avg_pool2d_20250711_4823",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "pooling_nhwc_vectorized_v1"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-16T12:02:02Z"
+  }
+}

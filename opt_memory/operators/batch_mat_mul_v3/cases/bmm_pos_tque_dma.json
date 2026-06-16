@@ -1,0 +1,10 @@
+{
+  "card_id": "bmm_pos_tque_dma",
+  "type": "positive",
+  "title": "TQue DMA Double Buffering enables compute/memory overlap",
+  "category": "memory_optimization",
+  "technique": "TQue<VECIN> + TQue<VECOUT> with depth=2 for double-buffered DMA",
+  "speedup_avg": 3.3054,
+  "lesson": "Using TQue with depth=2 allows overlapping data transfer with computation. While one tile is being computed, the next tile's data is being DMA'd in. This is essential for matmul-like kernels on Ascend NPU.",
+  "timestamp": "2026-06-10T01:29:05.186980"
+}

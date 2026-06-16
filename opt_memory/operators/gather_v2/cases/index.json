@@ -1,0 +1,20 @@
+{
+  "case_gather_v2_sess_20260613_7241_0": {
+    "path": "case_gather_v2_sess_20260613_7241_0.json",
+    "thought_id": "vec_datacopy_gather",
+    "thought_title": "标量逐元素→向量化 TQue DataCopy 行搬移",
+    "label": "effective",
+    "session_id": "sess_gather_v2_20260613_7241",
+    "step_index": 0,
+    "created_at": "2026-06-13T18:43:15Z"
+  },
+  "case_gather_v2_sess_20260614_4521_0": {
+    "path": "case_gather_v2_sess_20260614_4521_0.json",
+    "thought_id": "tbuf_direct_datacopy_gather_v2",
+    "thought_title": "TBuf 直接 DataCopy 替代 TQue VECIN/VECOUT 队列",
+    "label": "partial",
+    "session_id": "sess_gather_v2_20260614_4521",
+    "step_index": 0,
+    "created_at": "2026-06-14T18:18:16Z"
+  }
+}

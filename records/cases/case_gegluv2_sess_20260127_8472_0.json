@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gegluv2_sess_20260127_8472_0",
+  "kernel": {
+    "name": "gegluv2",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "GG_CHUNK=512, bf16 support, wX2_ buffer"
+  },
+  "thought": {
+    "id": "unknown",
+    "title": "gegluv2 Unknown",
+    "description": "GG_CHUNK: 64→512; 新增wX2_ buffer; 新增bf16 kernel入口; TILE_N_MAX: 4096→65536; 新增N-tiling框架(当前不触发)",
+    "reason": "",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,4096], N=[4096,37888,59136], 2*inter",
+    "dtype": "float16",
+    "data_tags": "fp16,bf16",
+    "task_tags": "fusion,gelu,glu,elementwise,ascendc"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 3.13,
+    "metric_changes": {
+      "speedup": 3.13,
+      "S1_speedup": 1.27,
+      "S2_speedup": 3.19,
+      "S3_speedup": 3.25,
+      "ref_mean_ms": 6.583,
+      "asc_mean_ms": 2.1
+    }
+  },
+  "chain": {
+    "session_id": "sess_gegluv2_20260127_8472",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "GG_CHUNK=64, fp16 only",
+    "dsl_after": "GG_CHUNK=512, bf16 support, wX2_ buffer",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output_fusion/ge_glu_v2/",
+    "created_at": "2026-06-15T16:10:21Z",
+    "updated_at": "2026-06-15T16:10:42Z"
+  }
+}

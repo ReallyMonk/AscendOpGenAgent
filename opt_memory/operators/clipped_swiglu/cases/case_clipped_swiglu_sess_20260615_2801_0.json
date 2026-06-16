@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_clipped_swiglu_sess_20260615_2801_0",
+  "kernel": {
+    "name": "clipped_swiglu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/clipped_swiglu/kernel/clipped_swiglu_kernel.h"
+  },
+  "thought": {
+    "id": "opt_cs512_exp_silu_buffer_reuse",
+    "title": "CS_CHUNK=512 + Exp-based SiLU + Buffer Reuse → 2.18x speedup",
+    "description": "Enlarged CS_CHUNK from 64 to 512 (8x fewer loop iterations), replaced tanh-based sigmoid with Exp-based SiLU (Muls*-1+Exp+Adds+Div), reduced Cast operations from 3 to 2 per chunk by reusing w2 buffer in-place instead of copying up to separate x2Orig buffer.",
+    "reason": "Larger chunks improve vector unit amortization and reduce loop overhead. Exp has lower latency than Tanh on Ascend 910B. Buffer reuse eliminates redundant memory copies and a PipeBarrier.",
+    "opt_layer": "instruction",
+    "target_bottleneck": "vector instruction count and loop overhead in element-wise compute",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[M,2*inter] fp16, M=1024-4096, inter=2048-29568",
+    "dtype": "float16",
+    "data_tags": [
+      "chunk512",
+      "exp_silu",
+      "cast_reduce",
+      "buffer_reuse"
+    ],
+    "task_tags": [
+      "chunk_size",
+      "sigmoid",
+      "vector_ops",
+      "memory_bound"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 2.18
+  },
+  "chain": {
+    "session_id": "sess_clipped_swiglu_20250615_2801",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "opt_cs512_exp_silu_buffer_reuse"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "CS_CHUNK=64, tanh sigmoid (Muls*0.5+Tanh+Adds+Muls*0.5), Cast fp16→fp32 x3, 3 TBuf",
+    "dsl_after": "CS_CHUNK=512, Exp SiLU (Muls*-1+Exp+Adds+Div), Cast fp16→fp32 x2, 3 TBuf with reuse",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/clipped_swiglu/",
+    "created_at": "2026-06-15T15:16:45Z"
+  }
+}

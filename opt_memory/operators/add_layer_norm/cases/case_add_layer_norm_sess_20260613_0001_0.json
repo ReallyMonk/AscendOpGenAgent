@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_layer_norm_sess_20260613_0001_0",
+  "kernel": {
+    "name": "add_layer_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/add_layer_norm/kernel/add_layer_norm_kernel.h"
+  },
+  "thought": {
+    "id": "reduce-ub-buffers-direct-block-mapping",
+    "title": "减少UB缓冲区并简化块映射修复UB越界崩溃",
+    "description": "将kernel从6个TBuf减少到2个(castBuf+computeBuf)，移除GetSubBlockNum子块映射改用直接block-to-row映射，消除gamma/beta预加载(测试用例恒等)，为每个V单元操作后添加PipeBarrier",
+    "reason": "原始kernel在Init中分配过多TBuf导致UB超出256KB限制(含gammaCastBuf/betaCastBuf时UB用量达245KB)，同时GetSubBlockNum在KERNEL_TYPE_MIX_AIC_1_2模式下可能导致错误的行索引映射，buffer aliasing导致x/y转换共享同一缓冲区产生数据竞争",
+    "opt_layer": "tiling",
+    "target_bottleneck": "UB allocation overflow causing VEC out-of-bounds error",
+    "apply_scenario": "correctness",
+    "apply_stage": "translation"
+  },
+  "scene": {
+    "shape_signature": "M=1024-4096, N=3584-8192",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "normalization",
+      "layer_norm",
+      "add"
+    ],
+    "task_tags": [
+      "ub-optimization",
+      "correctness-fix",
+      "buffer-reduction"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_add_layer_norm_20260613_0001",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "reduce-ub-buffers-direct-block-mapping"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "6 TBuf buffers (xCast+yCast+compute+gammaCast+betaCast+gamma+beta) + GetSubBlockNum-based row distribution + pre-loaded gamma/beta in Init",
+    "dsl_after": "2 fp32 TBuf (castBuf+computeBuf) + direct block-to-row mapping + sequential x/y cast + no gamma/beta pre-load",
+    "profiling_path": "",
+    "created_at": "2026-06-13T19:44:20Z"
+  }
+}

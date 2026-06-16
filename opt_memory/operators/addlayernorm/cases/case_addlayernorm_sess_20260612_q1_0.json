@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_addlayernorm_sess_20260612_q1_0",
+  "kernel": {
+    "name": "addlayernorm",
+    "category": "normalization",
+    "compute_type": "compute_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "baseline",
+    "title": "Scalar baseline with N-tiling",
+    "description": "Baseline scalar-loop kernel with N-tiling (MAX_TILE_N=4096). S1: 1.08ms, S3: 24.3ms, S5: 240ms.",
+    "reason": "Establish correct baseline before applying optimizations.",
+    "opt_layer": "tiling",
+    "target_bottleneck": "scalar sum loop",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,2048,4096,4096,8192], N=[512,1024,3584,8192,16384]",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_addlayernorm_20260612_q1",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "baseline"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-12T10:42:24Z"
+  }
+}

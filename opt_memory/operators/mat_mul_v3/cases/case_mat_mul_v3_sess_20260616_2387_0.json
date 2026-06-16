@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_mat_mul_v3_sess_20260616_2387_0",
+  "kernel": {
+    "name": "mat_mul_v3",
+    "category": "matmul",
+    "compute_type": "compute_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "mmad_128_tile_double_buffer",
+    "title": "128x128 MMAD tile + 双缓冲 + Fixpipe F322F16 量化",
+    "description": "实现基于AscendC MMAD指令的128x128x128 tile matmul kernel，使用L1双缓冲(L1_PREFETCH=2)，Fixpipe L0C(float)→GM(half)直写并设置F322F16量化模式。Python端通过padding对齐到128边界并使用16个AIC核并行。",
+    "reason": "Round 1优化目标：增大tile从16→128以充分利用Cube单元算力，双缓冲隐藏数据搬运延迟。F322F16量化确保float→half精度转换正确。解决了CANN 8.5.0 Fixpipe GlobalTensor类型匹配问题和matmul_tile.h编译兼容性。",
+    "opt_layer": "tiling",
+    "target_bottleneck": "Cube单元利用率不足(tile过小)",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[512-8192],K=[512-8192],N=[512-8192]; all-ones+random; fp16; blockM=128/blockN=128/blockK=128",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "matmul",
+      "cube",
+      "foundation",
+      "mmad",
+      "double_buffer"
+    ],
+    "task_tags": [
+      "ascendc",
+      "910b4",
+      "round1",
+      "tile-enlargement"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 5000.0
+  },
+  "chain": {
+    "session_id": "sess_mat_mul_v3_20260616_2387",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "mmad_128_tile_double_buffer"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-16T09:59:04Z"
+  }
+}

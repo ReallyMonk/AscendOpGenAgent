@@ -1,0 +1,8 @@
+{
+  "card_id": "bmm_neg_pattern_match_useless",
+  "type": "negative",
+  "title": "Pattern-match rounds (BlockSize/DoubleBuf) are NO-OPs on scalar kernels",
+  "category": "optimization_methodology",
+  "lesson": "R02-R12 pattern-based optimization rounds (e.g., changing DEFAULT_BLOCK_M from 128→256, searching for InitBuffer calls) produce ZERO effect on the baseline BMM kernel. The baseline uses scalar GlobalTensor::GetValue/SetValue with no UB buffers — there's nothing for the pattern matcher to modify. A complete architectural rewrite (UB tiling + DMA) is prerequisite.",
+  "timestamp": "2026-06-10T01:29:05.186990"
+}

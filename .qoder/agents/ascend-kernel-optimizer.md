@@ -1,6 +1,5 @@
 ---
 description: AscendC 算子优化智能体
-mode: primary
 temperature: 0.1
 tools:
   write: true

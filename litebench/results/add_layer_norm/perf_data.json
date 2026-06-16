@@ -1,0 +1,70 @@
+{
+  "experiment_name": "add_layer_norm_optimization_20250613",
+  "generated_at": "2026-06-13T17:42:00",
+  "global_meta": {
+    "device": "Ascend 910B",
+    "npu_model": "Ascend 910B",
+    "cann_version": "CANN 8.0.RC2",
+    "soc_version": "Ascend910B1",
+    "driver_version": "24.1.rc2",
+    "npu_memory_gb": 64,
+    "torch_version": "2.1.0",
+    "torch_npu_version": "2.1.0.post6"
+  },
+  "operators": [
+    {
+      "op_name": "add_layer_norm",
+      "shapes": [
+        {
+          "shape_id": "S1",
+          "description": "M=1024, N=3584 (small, fp16)",
+          "pytorch_ms": 0.080,
+          "ascendc_before_ms": 0.114,
+          "ascendc_after_ms": 0.087
+        },
+        {
+          "shape_id": "S2",
+          "description": "M=4096, N=3584 (qwen2.5_7b, fp16)",
+          "pytorch_ms": 0.150,
+          "ascendc_before_ms": 0.175,
+          "ascendc_after_ms": 0.125
+        },
+        {
+          "shape_id": "S3",
+          "description": "M=4096, N=5120 (qwen2.5_32b, fp16)",
+          "pytorch_ms": 0.180,
+          "ascendc_before_ms": 0.204,
+          "ascendc_after_ms": 0.136
+        },
+        {
+          "shape_id": "S4",
+          "description": "M=4096, N=8192 (qwen2.5_72b, fp16)",
+          "pytorch_ms": 0.240,
+          "ascendc_before_ms": 0.254,
+          "ascendc_after_ms": 0.159
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "card_id": "case_addlayernorm_sess_20250613_1742_0",
+          "title": "ReduceSum 替代标量累加循环 + merge_n 多行合并",
+          "category": "instruction",
+          "application": "标量循环 O(N) → ReduceSum 矢量归约 O(log N)，新增 merge_n 路径 (N≤1024, row_factor=8)，dynamic_blockM(64/128)，step_improvement=25x"
+        },
+        {
+          "card_id": "reduce-sum-replace-scalar-loop",
+          "title": "ReduceSum 替换标量循环 Pattern",
+          "category": "tiling",
+          "application": "通用 Pattern：逐元素标量累加 → AscendC::ReduceSum，适用于 N≤8192 的 UB 容量限制场景"
+        },
+        {
+          "card_id": "merge-n-multi-row-normalization",
+          "title": "merge_n 多行归一化合并 Pattern",
+          "category": "tiling",
+          "application": "N≤1024 时 row_factor=8 批量处理，减少 gamma/beta 广播开销，double_buffer depth=2 提升吞吐"
+        }
+      ]
+    }
+  ],
+  "knowledge_cards": []
+}

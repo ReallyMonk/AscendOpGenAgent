@@ -1,0 +1,17 @@
+{
+  "case_id": "case_relu_sess_relu_20260609_stepR03",
+  "kernel_name": "relu",
+  "category": "activation",
+  "compute_type": "memory_bound",
+  "effect_label": "effective",
+  "step_improvement": 1.0225,
+  "thought_title": "relu: R03 — ×1.022 speedup",
+  "thought_desc": "Applied R03 optimization",
+  "session_id": "sess_relu_20260609",
+  "step_index": 3,
+  "dtype": "torch.float16",
+  "shape_signature": "[(1024, 1024), (4096, 3584), (8192, 8192)]",
+  "target_bottleneck": "GM_bandwidth",
+  "confidence": 0.85,
+  "timestamp": "2026-06-09T09:53:25.655649"
+}

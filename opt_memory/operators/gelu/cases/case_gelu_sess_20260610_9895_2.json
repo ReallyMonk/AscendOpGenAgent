@@ -1,0 +1,52 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260610_9895_2",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "small_shape_overhead",
+    "title": "Small Shape Regression: Custom GELU Slower than PyTorch at 1024×1024",
+    "description": "For small shapes (S1: 1024×1024), custom AscendC kernel achieves only 0.87x speedup vs PyTorch reference. The pybind11 wrapper overhead, tiling setup (tiling tensor allocation, CPU→device transfer, kernel launch), and suboptimal core utilization (only 8 blocks for 1024 rows ÷ 128 blockM) dominate execution time for tiny workloads.",
+    "reason": "Elementwise activation on small tensors is memory-bound and launch-overhead dominated. PyTorch's fused GELU has zero kernel launch overhead and uses highly optimized vector paths. Custom kernel launch overhead is fixed cost regardless of tensor size.",
+    "opt_layer": "none",
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B*S=1024, H=1024] (S1: small)",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 0.87
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 2,
+    "prev_thought_id": "n_tiling_large_rows",
+    "prev_case_id": "case_gelu_sess_20260610_9895_1",
+    "full_sequence_hint": [
+      "baseline_001",
+      "n_tiling_large_rows",
+      "small_shape_overhead"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 2,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-10T06:13:04Z"
+  }
+}

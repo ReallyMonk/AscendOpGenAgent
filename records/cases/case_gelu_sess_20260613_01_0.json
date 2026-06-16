@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260613_01_0",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "Kope_v2: 3-path (batch/tiled), TILE_N_MAX=8192, dynamic batchSize, DataCopyParams"
+  },
+  "thought": {
+    "id": "shape_adaptive_tiling",
+    "title": "gelu Shape Adaptive Tiling",
+    "description": "Shape-adaptive 3-path GELU kernel: N-tiling (TILE_N_MAX=8192) for wide matrices, double-row batching (batchSize=2) for narrow matrices (N≤4096), dynamic UB buffer sizing via bufN*batchSize",
+    "reason": "Baseline→Kope_v2 差异: (1) 新增 TILE_N_MAX=8192 N维度tiling，对N>8192矩阵沿N轴分块处理——核心机制是ProcessRowTiled按TILE_N_MAX步进，每次CopyInTile/CopyOutTile只处理当前tile段；(2) 双行批处理：N≤4096时batchSize=2，一次处理两行，CopyIn/Compute/CopyOut均以nRows*count为单元——通过增加每次迭代的计算量来摊销kernel launch和访存延迟；(3) 动态UB buffer: bufN = needTiling_ ? TILE_N_MAX : N，总buffer = bufN * batchSize * sizeof(T)——避免为宽矩阵分配过大UB；(4) DataCopyParams: tiled-N路径中用blockCount=2+srcStride/dstStride实现两行跨步GM↔UB拷贝；(5) needTiling_标志位在Init和Process中各计算一次，保证N>8192时正确分派到tiled路径",
+    "opt_layer": "instruction",
+    "related_opt_layers": [],
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "(1024,1024)->(8192,29568)",
+    "dtype": "float16",
+    "data_tags": "qwen2.5,llm,activation",
+    "task_tags": "gelu,elementwise,shape-adaptive,tiling"
+  },
+  "effect": {
+    "label": "negative",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 0.5639,
+    "metric_changes": {
+      "task_duration_us": {
+        "before": 5488,
+        "after": 9732
+      }
+    }
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260613_01",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "Baseline: single-row, no N-tiling, UB=N*sizeof(T)",
+    "dsl_after": "Kope_v2: 3-path (batch/tiled), TILE_N_MAX=8192, dynamic batchSize, DataCopyParams",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/gelu/",
+    "created_at": "2026-06-13T18:52:26Z"
+  }
+}

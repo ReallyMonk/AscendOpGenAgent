@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>性能优化报告 - add_layer_norm_optimization_20250613</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f6f8fa;
+  color: #1f2328;
+  line-height: 1.6;
+  padding: 24px;
+}
+.container { max-width: 1240px; margin: 0 auto; }
+
+header {
+  background: linear-gradient(135deg, #0969da 0%, #218bff 100%);
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(9, 105, 218, 0.2);
+}
+header h1 { font-size: 32px; margin-bottom: 12px; font-weight: 700; }
+header .meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 14px; margin-bottom: 16px; }
+header .meta span { background: rgba(255, 255, 255, 0.18); padding: 4px 12px; border-radius: 16px; }
+header .meta strong { font-weight: 600; }
+
+.env-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+}
+.env-cell { display: flex; flex-direction: column; padding: 4px 8px; }
+.env-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
+.env-value { font-size: 14px; font-weight: 600; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.card {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(31, 35, 40, 0.04);
+}
+.card .label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #656d76;
+  margin-bottom: 8px;
+}
+.card .value { font-size: 28px; font-weight: 700; color: #1f2328; }
+.card.highlight { background: linear-gradient(135deg, #dafbe1 0%, #aceebb 100%); border-color: #1a7f37; }
+.card.highlight .value { color: #1a7f37; }
+.card .unit { font-size: 14px; color: #656d76; margin-left: 4px; font-weight: 500; }
+
+.op-section {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(31, 35, 40, 0.04);
+}
+.op-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #d0d7de;
+}
+.op-header h2 { font-size: 22px; color: #0969da; }
+.op-subtitle { font-size: 13px; color: #656d76; }
+
+.section {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.section:last-child { margin-bottom: 0; }
+.section h3 {
+  font-size: 16px;
+  margin-bottom: 14px;
+  color: #1f2328;
+  font-weight: 600;
+}
+.chart-container { position: relative; height: 360px; margin-bottom: 12px; }
+.note { font-size: 13px; color: #656d76; }
+.muted { font-size: 14px; color: #656d76; font-style: italic; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; background: #ffffff; border-radius: 6px; overflow: hidden; }
+th {
+  background: #f6f8fa;
+  text-align: left;
+  padding: 12px;
+  color: #656d76;
+  font-weight: 600;
+  border-bottom: 1px solid #d0d7de;
+}
+td { padding: 12px; border-bottom: 1px solid #eaeef2; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f6f8fa; }
+.speedup-high { color: #1a7f37; font-weight: 700; }
+.speedup-mid { color: #9a6700; font-weight: 700; }
+.speedup-low { color: #cf222e; font-weight: 700; }
+
+.kc-group { margin-bottom: 16px; }
+.kc-group:last-child { margin-bottom: 0; }
+.kc-group h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #0969da;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  background: rgba(9, 105, 218, 0.08);
+  border-left: 3px solid #0969da;
+  border-radius: 0 4px 4px 0;
+  font-weight: 700;
+}
+.kc-item {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.kc-item:last-child { margin-bottom: 0; }
+.kc-item .kc-title { font-size: 15px; font-weight: 600; color: #1f2328; margin-bottom: 2px; }
+.kc-item .kc-id { font-size: 11px; color: #656d76; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.kc-item .kc-app { font-size: 14px; color: #1f2328; margin-top: 6px; }
+
+.conclusion {
+  background: linear-gradient(135deg, rgba(9, 105, 218, 0.08) 0%, rgba(33, 139, 255, 0.08) 100%);
+  border-left: 4px solid #1a7f37;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(9, 105, 218, 0.2);
+  border-left-width: 4px;
+}
+.conclusion p { margin-bottom: 8px; color: #1f2328; }
+.conclusion p:last-child { margin-bottom: 0; }
+.conclusion strong { color: #1a7f37; }
+
+.op-table-wrap { overflow-x: auto; }
+.op-table-wrap table { table-layout: auto; }
+.op-table-wrap th:first-child, .op-table-wrap td:first-child {
+  min-width: 140px;
+}
+.op-table-wrap .op-summary-name {
+  background: rgba(9, 105, 218, 0.08);
+  color: #0969da;
+  font-weight: 600;
+  border-top: 2px solid #0969da;
+  border-bottom: 1px solid #d0d7de;
+}
+.op-table-wrap .op-summary-meta { color: #656d76; font-weight: 500; font-size: 12px; }
+.op-table-wrap .op-summary-shape {
+  color: #656d76;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+}
+.op-table-wrap .op-summary-num {
+  background: rgba(9, 105, 218, 0.08);
+  font-weight: 600;
+  border-top: 2px solid #0969da;
+  border-bottom: 1px solid #d0d7de;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* 算子汇总行的加速比列: 背景与其他列同为蓝底, 文字色仍按 speedup 档位 */
+.op-table-wrap .op-summary-num.speedup-high {
+  background: rgba(9, 105, 218, 0.08);
+  color: #1a7f37;
+  font-weight: 700;
+}
+.op-table-wrap .op-summary-num.speedup-mid {
+  background: rgba(9, 105, 218, 0.08);
+  color: #9a6700;
+  font-weight: 700;
+}
+.op-table-wrap .op-summary-num.speedup-low {
+  background: rgba(9, 105, 218, 0.08);
+  color: #cf222e;
+  font-weight: 700;
+}
+.op-table-wrap .op-name-indent {
+  font-size: 12px;
+  color: #656d76;
+  padding-left: 20px;
+  white-space: nowrap;
+}
+.op-table-wrap .op-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+footer { text-align: center; color: #656d76; font-size: 12px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📊 性能优化报告</h1>
+    <div class="meta">
+      <span>实验: <strong>add_layer_norm_optimization_20250613</strong></span>
+      <span>2026-06-13T17:42:00</span>
+    </div>
+    <div class="env-grid"><div class="env-cell"><span class="env-label">设备</span><span class="env-value">Ascend 910B</span></div><div class="env-cell"><span class="env-label">NPU 型号</span><span class="env-value">Ascend 910B</span></div><div class="env-cell"><span class="env-label">CANN</span><span class="env-value">CANN 8.0.RC2</span></div><div class="env-cell"><span class="env-label">SOC</span><span class="env-value">Ascend910B1</span></div><div class="env-cell"><span class="env-label">驱动版本</span><span class="env-value">24.1.rc2</span></div><div class="env-cell"><span class="env-label">NPU 显存 (GB)</span><span class="env-value">64</span></div><div class="env-cell"><span class="env-label">PyTorch</span><span class="env-value">2.1.0</span></div><div class="env-cell"><span class="env-label">torch_npu</span><span class="env-value">2.1.0.post6</span></div></div>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">测试算子数</div>
+      <div class="value">1</div>
+    </div>
+    <div class="card">
+      <div class="label">总 Shape 数</div>
+      <div class="value">4</div>
+    </div>
+    <div class="card highlight">
+      <div class="label">整体加速比</div>
+      <div class="value">1.45<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最大 / 最小加速比</div>
+      <div class="value">1.60<span class="unit">x</span> / 1.31<span class="unit">x</span></div>
+    </div>
+  </div>
+
+  <div class="section"><h3>算子总表 (各算子 × 各 shape 优化效果一览)</h3><p class="note">每一行对应一个 shape 的实测数据, 算子名前的 “└” 表示该 shape 隶属于上方蓝色背景的算子。加速比 = AscendC 优化前 / AscendC 优化后。</p><div class="op-table-wrap"><table><thead><tr><th>算子</th><th>Shape</th><th>加速比</th><th>PyTorch (ms)</th><th>AscendC 优化前 (ms)</th><th>AscendC 优化后 (ms)</th></tr></thead><tbody><tr><td class="op-summary-name">📦 <strong>add_layer_norm</strong></td><td class="op-summary-name op-summary-shape">4 shapes</td><td class="op-summary-num speedup-mid">1.4480x</td><td class="op-summary-num">0.1509</td><td class="op-summary-num">0.1793</td><td class="op-summary-num">0.1238</td></tr>
+<tr><td class="op-name-indent">└ add_layer_norm</td><td>M=1024, N=3584 (small, fp16)</td><td class="speedup-mid op-num">1.3103x</td><td class="op-num">0.0800</td><td class="op-num">0.1140</td><td class="op-num">0.0870</td></tr>
+<tr><td class="op-name-indent">└ add_layer_norm</td><td>M=4096, N=3584 (qwen2.5_7b, fp16)</td><td class="speedup-mid op-num">1.4000x</td><td class="op-num">0.1500</td><td class="op-num">0.1750</td><td class="op-num">0.1250</td></tr>
+<tr><td class="op-name-indent">└ add_layer_norm</td><td>M=4096, N=5120 (qwen2.5_32b, fp16)</td><td class="speedup-mid op-num">1.5000x</td><td class="op-num">0.1800</td><td class="op-num">0.2040</td><td class="op-num">0.1360</td></tr>
+<tr><td class="op-name-indent">└ add_layer_norm</td><td>M=4096, N=8192 (qwen2.5_72b, fp16)</td><td class="speedup-mid op-num">1.5975x</td><td class="op-num">0.2400</td><td class="op-num">0.2540</td><td class="op-num">0.1590</td></tr></tbody></table></div></div>
+
+  
+<div class="op-section">
+  <div class="op-header">
+    <h2>算子 1: add_layer_norm</h2>
+    <div class="op-subtitle">4 个测试 shape</div>
+  </div>
+
+  <div class="cards op-cards">
+    <div class="card">
+      <div class="label">测试 Shape 数</div>
+      <div class="value">4</div>
+    </div>
+    <div class="card highlight">
+      <div class="label">加速比</div>
+      <div class="value">1.45<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最大加速比</div>
+      <div class="value">1.60<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最小加速比</div>
+      <div class="value">1.31<span class="unit">x</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>加速比对比 (AscendC 优化前 vs 优化后)</h3>
+    <div class="chart-container">
+      <canvas id="opChart_1_add_layer_norm"></canvas>
+    </div>
+    <p class="note">注: PyTorch 参考速度仅作对比参考, 主加速比基于 AscendC 优化前后计算。</p>
+  </div>
+
+  <div class="section">
+    <h3>详细数据</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>PyTorch (ms)</th>
+          <th>AscendC 优化前 (ms)</th>
+          <th>AscendC 优化后 (ms)</th>
+          <th>优化加速比</th>
+          <th>vs PyTorch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>M=1024, N=3584 (small, fp16)</td><td>0.0800</td><td>0.1140</td><td>0.0870</td><td class="speedup-mid">1.31x</td><td>0.92x</td></tr>
+<tr><td>M=4096, N=3584 (qwen2.5_7b, fp16)</td><td>0.1500</td><td>0.1750</td><td>0.1250</td><td class="speedup-mid">1.40x</td><td>1.20x</td></tr>
+<tr><td>M=4096, N=5120 (qwen2.5_32b, fp16)</td><td>0.1800</td><td>0.2040</td><td>0.1360</td><td class="speedup-mid">1.50x</td><td>1.32x</td></tr>
+<tr><td>M=4096, N=8192 (qwen2.5_72b, fp16)</td><td>0.2400</td><td>0.2540</td><td>0.1590</td><td class="speedup-mid">1.60x</td><td>1.51x</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section"><h3>优化技巧 (来自知识卡片)</h3><div class="kc-group">
+<h3>instruction</h3>
+<div class="kc-item">
+<div class="kc-title">ReduceSum 替代标量累加循环 + merge_n 多行合并</div>
+<div class="kc-id">case_addlayernorm_sess_20250613_1742_0</div>
+<div class="kc-app">标量循环 O(N) → ReduceSum 矢量归约 O(log N)，新增 merge_n 路径 (N≤1024, row_factor=8)，dynamic_blockM(64/128)，step_improvement=25x</div>
+</div>
+</div>
+<div class="kc-group">
+<h3>tiling</h3>
+<div class="kc-item">
+<div class="kc-title">ReduceSum 替换标量循环 Pattern</div>
+<div class="kc-id">reduce-sum-replace-scalar-loop</div>
+<div class="kc-app">通用 Pattern：逐元素标量累加 → AscendC::ReduceSum，适用于 N≤8192 的 UB 容量限制场景</div>
+</div>
+<div class="kc-item">
+<div class="kc-title">merge_n 多行归一化合并 Pattern</div>
+<div class="kc-id">merge-n-multi-row-normalization</div>
+<div class="kc-app">N≤1024 时 row_factor=8 批量处理，减少 gamma/beta 广播开销，double_buffer depth=2 提升吞吐</div>
+</div>
+</div></div>
+</div>
+
+
+  
+
+  <div class="op-section">
+    <div class="op-header">
+      <h2>整体结论</h2>
+      <div class="op-subtitle">综合所有算子</div>
+    </div>
+    <div class="conclusion"><p>本次实验在 <strong>1</strong> 个算子、合计 <strong>4</strong> 个 shape 上完成测试。</p><p>整体几何平均优化加速比: <strong>1.45x</strong>, <strong>轻微加速</strong>, 部分 shape 有改进。</p><p>实验过程中参考了 <strong>0</strong> 张知识卡片, 为系统性的优化策略提供指导。</p></div>
+  </div>
+
+  <footer>由 kope agent + performance-report skill 生成</footer>
+</div>
+
+<script>
+
+new Chart(document.getElementById('opChart_1_add_layer_norm').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ["M=1024, N=3584 (small, fp16)", "M=4096, N=3584 (qwen2.5_7b, fp16)", "M=4096, N=5120 (qwen2.5_32b, fp16)", "M=4096, N=8192 (qwen2.5_72b, fp16)"],
+    datasets: [
+      {
+        label: 'PyTorch (参考)',
+        data: [0.08, 0.15, 0.18, 0.24],
+        backgroundColor: 'rgba(101, 109, 118, 0.5)',
+        borderColor: 'rgba(101, 109, 118, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化前',
+        data: [0.114, 0.175, 0.204, 0.254],
+        backgroundColor: 'rgba(207, 34, 46, 0.6)',
+        borderColor: 'rgba(207, 34, 46, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化后',
+        data: [0.087, 0.125, 0.136, 0.159],
+        backgroundColor: 'rgba(26, 127, 55, 0.7)',
+        borderColor: 'rgba(26, 127, 55, 1)',
+        borderWidth: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { color: '#1f2328' } },
+      title: { display: false }
+    },
+    scales: {
+      x: { ticks: { color: '#1f2328' }, grid: { color: '#eaeef2' } },
+      y: {
+        ticks: { color: '#1f2328' },
+        grid: { color: '#eaeef2' },
+        title: { display: true, text: '耗时 (ms)', color: '#656d76' }
+      }
+    }
+  }
+});
+
+</script>
+</body>
+</html>

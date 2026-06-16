@@ -1,0 +1,1 @@
+{"operator": "gelu", "results": {"S1": 0.195176, "S2": 0.304712, "S3": 0.484453}, "best_speedup": 1.025032867037215, "best_round": "R06"}

@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_swiglu_sess_20260615_4d7f_1",
+  "kernel": {
+    "name": "swiglu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "CHUNK=256"
+  },
+  "thought": {
+    "id": "vectorization_chunk_size",
+    "title": "swiglu Vectorization Chunk Size",
+    "description": "Increase SWI_GLU_CHUNK from 64 to 256: larger vector operation granularity reduces loop iterations by 4x, better utilizing Ascend vector units.",
+    "reason": "Changed constexpr int32_t SWI_GLU_CHUNK = 64 to 256. Each inner loop iteration now processes 256 elements instead of 64, reducing loop overhead 4x and enabling wider AscendC vector operations at full 256-element width. 3.2x speedup (9.61ms→3.00ms).",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[4096,37888] fp16",
+    "dtype": "float16",
+    "data_tags": "deepseek_v3,qwen2.5",
+    "task_tags": "elementwise,activation"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 3.202,
+    "metric_changes": {
+      "task_duration_us": {
+        "before": 9609,
+        "after": 3001
+      }
+    }
+  },
+  "chain": {
+    "session_id": "sess_20260615_4d7f",
+    "step_index": 1,
+    "prev_thought_id": "step_0",
+    "prev_case_id": "case_swiglu_sess_20260615_4d7f_0",
+    "full_sequence_hint": [
+      "step_0",
+      "step_1"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "CHUNK=64",
+    "dsl_after": "CHUNK=256",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/swi_glu/evaluation_results/ascendc-evaluation",
+    "created_at": "2026-06-15T14:59:48Z",
+    "updated_at": "2026-06-15T15:00:49Z"
+  }
+}

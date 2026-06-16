@@ -1,0 +1,20 @@
+{
+  "case_avgpool2d_sess_20260613_ab12_0": {
+    "path": "case_avgpool2d_sess_20260613_ab12_0.json",
+    "thought_id": "avgpool2d_vectorized_simd",
+    "thought_title": "avgpool2d 8-element Vectorized SIMD Implementation",
+    "label": "partial",
+    "session_id": "sess_avgpool2d_20260613_ab12",
+    "step_index": 0,
+    "created_at": "2026-06-13T14:24:59Z"
+  },
+  "case_avgpool2d_sess_20250613_0001_0": {
+    "path": "case_avgpool2d_sess_20250613_0001_0.json",
+    "thought_id": "avgpool2d_baseline_scalar",
+    "thought_title": "avgpool2d Baseline Scalar Implementation",
+    "label": "negative",
+    "session_id": "sess_avgpool2d_20250613_0001",
+    "step_index": 0,
+    "created_at": "2026-06-13T17:10:27Z"
+  }
+}

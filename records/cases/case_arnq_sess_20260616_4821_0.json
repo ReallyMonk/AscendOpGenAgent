@@ -1,0 +1,34 @@
+{
+  "case_id": "case_arnq_sess_20260616_4821_0",
+  "kernel": {
+    "name": "add_rms_norm_quant",
+    "category": "normalization",
+    "compute_type": "memory_bound"
+  },
+  "thought": {
+    "id": "fp16_precision_adaptive_tiling",
+    "title": "fp16精度路径 + 自适应分块 + 单缓冲队列",
+    "description": "三项关键优化：(1) 在TQue LocalTensor上做in-place fp16 Add+Mul实现add+square，匹配PyTorch reference的fp16精度路径；(2) 用sqrt+1/x替代AscendC::Rsqrt，消除rsqrt硬件实现与reference sqrt后1/x路径的ULP精度差异；(3) 自适应BLOCK_M: M≤2048用128(8 cores), M>2048用256(16 cores)；(4) 单缓冲队列depth=1减少memory-bound算子的流水线同步开销。S1从19.87ms→0.485ms(41x)，精度从97.66%→99.61%。",
+    "reason": "原kernel使用fp32全精度add+square与reference的fp16路径不匹配导致2.34%元素精度差异。AscendC::Rsqrt与reference的sqrt+1/x在边界值处产生ULP差异。BLOCK_M=256在M=1024时仅产生4个block导致核心利用率仅12.5%。双缓冲队列在memory-bound算子中增加了不必要的流水线同步开销。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "fusion, reduction, memory_traffic"
+  },
+  "scene": {
+    "shape_signature": "M=1024..4096,N=3584..8192",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "step_improvement": 1.86
+  },
+  "chain": {
+    "session_id": "sess_add_rms_norm_quant_20250614_4821",
+    "step_index": 0
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "created_at": "2026-06-16T08:30:00"
+  }
+}

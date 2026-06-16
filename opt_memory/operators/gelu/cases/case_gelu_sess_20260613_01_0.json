@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260613_01_0",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/gelu/kernel/gelu_kernel.h"
+  },
+  "thought": {
+    "id": "shape-adaptive-3path",
+    "title": "Shape-Adaptive 3-Path GELU Kernel：N-tiling + 双行批处理 + 动态UB",
+    "description": "从 litebench baseline (单行逐行处理，无N-tiling) 升级为 shape-adaptive 3-path kernel：(1) 添加 TILE_N_MAX=8192 N-tiling 使 kernel 能处理任意宽度矩阵；(2) N≤4096 时双行批处理 (batchSize=2) 提高计算强度；(3) 动态 UB buffer 按 bufN*batchSize 分配减少浪费；(4) DataCopyParams 实现 tiled-N 路径的高效多行跨步拷贝",
+    "reason": "Baseline kernel 受限于 UB 容量无法处理 N>UB 的矩阵，且逐行处理无法充分利用向量单元。通过 shape-adaptive 策略，根据 N 大小自动选择最优路径：窄矩阵用双行批处理提高吞吐，宽矩阵用 N-tiling 突破 UB 限制",
+    "opt_layer": "tiling",
+    "target_bottleneck": "UB容量限制 + GM带宽",
+    "apply_scenario": "both",
+    "apply_stage": "translation"
+  },
+  "scene": {
+    "shape_signature": "(1024,1024)->(8192,29568), fp16/bf16",
+    "dtype": "float16",
+    "data_tags": [
+      "qwen2.5",
+      "llm",
+      "activation"
+    ],
+    "task_tags": [
+      "gelu",
+      "elementwise",
+      "shape-adaptive",
+      "tiling"
+    ]
+  },
+  "effect": {
+    "label": "negative",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 0.576
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260613_01",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "shape-adaptive-3path"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "// Baseline: 单行逐行处理，无N-tiling\n// UB buffer: N * sizeof(T)\n// ProcessRow(ri): CopyIn→ComputeRow→CopyOut\n// Tiling: blockM=128 only",
+    "dsl_after": "// Kope_v2: Shape-adaptive 3-path\n// TILE_N_MAX=8192, dynamic batchSize (2 for N≤4096)\n// needTiling_ = N > TILE_N_MAX\n// ProcessRowBatch (full-row) + ProcessRowTiled (tiled-N)\n// DataCopyParams for multi-row stride copy",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/gelu/",
+    "created_at": "2026-06-13T18:52:18Z"
+  }
+}

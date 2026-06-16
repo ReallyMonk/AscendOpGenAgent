@@ -1,0 +1,13 @@
+{
+  "card_id": "bmm_pos_t64x128",
+  "type": "positive",
+  "title": "K-N Tiling (64×128): 3.31x speedup",
+  "category": "tiling_strategy",
+  "technique": "K_TILE=64, N_TILE=128, TQue DMA double buffer, fp32 UB accumulation",
+  "speedup_avg": 3.3051,
+  "speedup_max": 3.3368,
+  "speedup_min": 3.2604,
+  "shapes_tested": 5,
+  "lesson": "Tiling K=64 and N=128 with double-buffered DMA achieves 3.31x average speedup over scalar baseline. UB-local fp32 accumulation eliminates repeated global memory writes and maintains numerical precision.",
+  "timestamp": "2026-06-10T01:29:05.186871"
+}

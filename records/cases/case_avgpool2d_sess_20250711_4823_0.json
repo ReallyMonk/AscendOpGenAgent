@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_avgpool2d_sess_20250711_4823_0",
+  "kernel": {
+    "name": "avgpool2d",
+    "category": "reduction",
+    "compute_type": "memory_bound",
+    "path": "vectorized_datacopy_add_muls_nhwc"
+  },
+  "thought": {
+    "id": "pooling-nhwc-channel-vectorization",
+    "title": "avgpool2d Pooling-Nhwc-Channel-Vectorization",
+    "description": "NCHW→NHWC layout转换使C个通道连续，DataCopy向量化加载替代标量GetValue/SetValue",
+    "reason": "NHWC+DataCopy(count=C)+Add/Muls向量化+TQue+PipeBarrier",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "NCHW->NHWC, C=64/256/512, k=2,s=2,p=0",
+    "dtype": "float32",
+    "data_tags": "small_shape,pooling",
+    "task_tags": "channel_vectorization,nhwc_layout"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 1.7588,
+    "metric_changes": {
+      "task_duration_us": {
+        "before": 700,
+        "after": 398
+      }
+    }
+  },
+  "chain": {
+    "session_id": "sess_20250711_4823",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "scalar_getvalue_setvalue_nchw",
+    "dsl_after": "vectorized_datacopy_add_muls_nhwc",
+    "profiling_path": "",
+    "created_at": "2026-06-16T12:01:53Z"
+  }
+}

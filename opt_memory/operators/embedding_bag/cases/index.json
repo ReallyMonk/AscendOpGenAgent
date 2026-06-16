@@ -1,0 +1,20 @@
+{
+  "case_embedding_bag_sess_20260612_8084_0": {
+    "path": "case_embedding_bag_sess_20260612_8084_0.json",
+    "thought_id": "embedding_bag_baseline_scalar",
+    "thought_title": "embedding_bag baseline: 标量实现",
+    "label": "effective",
+    "session_id": "sess_embedding_bag_20251216_8084",
+    "step_index": 0,
+    "created_at": "2026-06-12T19:41:01Z"
+  },
+  "case_embedding_bag_sess_20260612_8084_1": {
+    "path": "case_embedding_bag_sess_20260612_8084_1.json",
+    "thought_id": "embedding_bag_n_tiling_vectorize",
+    "thought_title": "embedding_bag N-tiling + 向量化归约",
+    "label": "effective",
+    "session_id": "sess_embedding_bag_20251216_8084",
+    "step_index": 1,
+    "created_at": "2026-06-12T19:41:01Z"
+  }
+}

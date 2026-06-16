@@ -1,0 +1,34 @@
+{
+  "case_id": "case_matmulv3_sess_20260616_a75d_0",
+  "kernel": {
+    "name": "mat_mul_v3",
+    "category": "matmul",
+    "compute_type": "compute_bound"
+  },
+  "thought": {
+    "id": "mm_mmad_init",
+    "title": "单矩阵乘MMAD 128x128x128 tile初始实现",
+    "description": "使用MatmulKernelRef实现GEMM的MMAD计算。128x128x128 tile匹配910B4 Cube单元，L1_PREFETCH=2双缓冲隐藏延迟，Fixpipe quantPre=F322F16实现float→half量化转换，GetPhyAddr+SetGlobalBuffer确保Fixpipe stride写入不越界。输出buffer分配额外blockM安全行。覆盖5种shape从小方形到压力测试。",
+    "reason": "MMAD 128x128x128 tile是910B4 Cube单元的最大规格，可充分利用单次Cube运算的算力。双缓冲和Fixpipe float→half量化是正确性和性能的关键：未设置F322F16导致输出全零或错值，未使用GetPhyAddr导致DDR越界crash。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "cube_underutil"
+  },
+  "scene": {
+    "shape_signature": "M=512~8192, K=512~8192, N=256~29568",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "ineffective",
+    "step_improvement": 0.26,
+    "confidence": 0.85
+  },
+  "chain": {
+    "session_id": "sess_mmad_matmul_20260616_a75d",
+    "step_index": 0
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "created_at": "2026-06-16T10:16:00"
+  }
+}

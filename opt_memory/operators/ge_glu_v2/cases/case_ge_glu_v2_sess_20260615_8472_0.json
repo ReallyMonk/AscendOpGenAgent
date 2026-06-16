@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_ge_glu_v2_sess_20260615_8472_0",
+  "kernel": {
+    "name": "ge_glu_v2",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output_fusion/ge_glu_v2/kernel/ge_glu_v2_kernel.h"
+  },
+  "thought": {
+    "id": "chunk_512_x2buf",
+    "title": "GG_CHUNK 64→512 + x2备份缓冲区 → 3.13x加速",
+    "description": "将GG_CHUNK从64扩大到512以减少向量化循环迭代次数8倍，添加wX2_备份缓冲区避免GELU tanh计算中x2重载，增加bfloat16支持，将TILE_N_MAX设为65536使全shape走全行路径",
+    "reason": "baseline GG_CHUNK=64导致循环迭代次数过多(每行64次chunk循环)，512可减少到每行4-8次迭代，显著减少指令发射开销并提升向量单元利用率。x2Wk在x2^3计算中被覆写，需要额外wX2_缓冲区保存副本以供后续x2*(1+tanh)使用",
+    "opt_layer": "tiling",
+    "target_bottleneck": "vectorization chunk too small (GG_CHUNK=64), excessive loop overhead",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,4096], N=[4096,37888,59136], 2*inter, memory_bound elementwise fusion",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "bf16"
+    ],
+    "task_tags": [
+      "fusion",
+      "gelu",
+      "glu",
+      "elementwise",
+      "ascendc"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 3.13
+  },
+  "chain": {
+    "session_id": "sess_ge_glu_v2_20260127_8472",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "chunk_512_x2buf"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "GG_CHUNK=64, fp16 only, single work buffer set",
+    "dsl_after": "GG_CHUNK=512, TILE_N_MAX=65536, wX2_ backup buffer, bf16 support",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output_fusion/ge_glu_v2/",
+    "created_at": "2026-06-15T16:09:41Z"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260610_9895_0",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "baseline_001",
+    "title": "GELU Baseline: Proven AscendC Kernel (verbatim from original)",
+    "description": "Established baseline using the proven working GELU AscendC kernel. Implementation uses: DEFAULT_BLOCK_M=128 rows per block, KERNEL_TYPE_MIX_AIC_1_2 (1 AIC+2 AIV), TQue depth=0 for in-place I/O, TBuf VECCALC for fp32 intermediates, AscendC::Tanh for activation, DataCopy 1D element-count for GM↔UB transfers. Supports fp16/fp32/bf16.",
+    "reason": "Starting from a known-correct implementation ensures we have a reliable baseline. The original kernel's sub-1.0x speedup vs PyTorch indicates optimization headroom in tiling parameters and memory access patterns.",
+    "opt_layer": "none",
+    "target_bottleneck": "GM↔UB bandwidth, suboptimal block size for large rows",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B*S=4096, H=3584] (S2: qwen2.5_7b)",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "baseline_001"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-10T06:07:32Z"
+  }
+}

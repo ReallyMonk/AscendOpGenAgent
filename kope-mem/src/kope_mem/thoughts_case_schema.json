@@ -9,7 +9,7 @@
     "case_id": {
       "type": "string",
       "description": "Case 的唯一标识符",
-      "pattern": "^case_[A-Za-z0-9]+_sess_[0-9]{8}_[0-9a-zA-Z]+_[0-9]+$",
+      "pattern": "^case_[A-Za-z0-9_]+_sess_[0-9]{8}_[0-9a-zA-Z]+_[0-9]+$",
       "examples": ["case_LeakyReLU_sess_20260427_01_1"]
     },
     "kernel": {

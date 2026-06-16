@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_layer_norm_sess_20260613_1742_0",
+  "kernel": {
+    "name": "add_layer_norm",
+    "category": "normalization",
+    "compute_type": "compute_bound",
+    "path": "/home/hrl/AscendOpGenAgent/litebench/results/add_layer_norm/kernel/"
+  },
+  "thought": {
+    "id": "reduce_sum_vectorization_v1",
+    "title": "ReduceSum 替代标量累加循环 + merge_n 多行合并",
+    "description": "将逐元素标量累加循环替换为 AscendC::ReduceSum 硬件矢量归约。同时新增 merge_n 路径 (N≤1024, row_factor=8) 多行合并处理，减少 gamma/beta 加载开销。引入 dynamic_blockM (M≤4096→64, else→128) 改善小 M 场景核心利用率。",
+    "reason": "标量循环在 Vector 处理器上 O(N) 开销极大，ReduceSum 利用硬件矢量归约单元 O(log N) 完成。历史 pattern reduce-sum-replace-scalar-loop 直接适用。merge_n 路径通过 row_factor 批量减少参数广播次数。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "标量累加循环在Vector处理器上串行执行成为主导瓶颈",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[128..4096], N=[256..8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "reduce_sum",
+      "vectorization",
+      "merge_n",
+      "multi_row"
+    ],
+    "task_tags": [
+      "normalization",
+      "fusion",
+      "add_layer_norm"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 25.0
+  },
+  "chain": {
+    "session_id": "sess_add_layer_norm_20250613_1742",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "reduce_sum_vectorization_v1"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "标量循环: for(int i=0;i<N;i++){sum+=addFp32(i);}",
+    "dsl_after": "矢量归约: ReduceSum<float>(sumScalar, addFp32, reduceWork, N)",
+    "profiling_path": "",
+    "created_at": "2026-06-13T17:30:10Z"
+  }
+}

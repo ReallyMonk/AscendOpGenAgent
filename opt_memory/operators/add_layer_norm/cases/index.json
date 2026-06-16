@@ -1,0 +1,47 @@
+{
+  "case_add_layer_norm_sess_20260613_1742_0": {
+    "path": "case_add_layer_norm_sess_20260613_1742_0.json",
+    "thought_id": "reduce_sum_vectorization_v1",
+    "thought_title": "ReduceSum 替代标量累加循环 + merge_n 多行合并",
+    "label": "effective",
+    "session_id": "sess_add_layer_norm_20250613_1742",
+    "step_index": 0,
+    "created_at": "2026-06-13T17:30:10Z"
+  },
+  "case_add_layer_norm_sess_20260613_0001_0": {
+    "path": "case_add_layer_norm_sess_20260613_0001_0.json",
+    "thought_id": "reduce-ub-buffers-direct-block-mapping",
+    "thought_title": "减少UB缓冲区并简化块映射修复UB越界崩溃",
+    "label": "effective",
+    "session_id": "sess_add_layer_norm_20260613_0001",
+    "step_index": 0,
+    "created_at": "2026-06-13T19:44:20Z"
+  },
+  "case_add_layer_norm_sess_20260615_a3f8_0": {
+    "path": "case_add_layer_norm_sess_20260615_a3f8_0.json",
+    "thought_id": "reduce_sum_single_aiv",
+    "thought_title": "ReduceSum矢量归约 + MIX_AIC_1_1单AIV + 精简TBuf",
+    "label": "effective",
+    "session_id": "sess_add_layer_norm_20251217_a3f8",
+    "step_index": 0,
+    "created_at": "2026-06-15T16:47:08Z"
+  },
+  "case_add_layer_norm_sess_20260616_2847_1": {
+    "path": "case_add_layer_norm_sess_20260616_2847_1.json",
+    "thought_id": "reduce_sum_vectorization",
+    "thought_title": "ReduceSum 向量化归约替代标量循环",
+    "label": "effective",
+    "session_id": "sess_add_layer_norm_20250616_2847",
+    "step_index": 1,
+    "created_at": "2026-06-16T10:42:13Z"
+  },
+  "case_add_layer_norm_sess_20260616_2847_0": {
+    "path": "case_add_layer_norm_sess_20260616_2847_0.json",
+    "thought_id": "scalar_baseline",
+    "thought_title": "标量循环归约基线",
+    "label": "ineffective",
+    "session_id": "sess_add_layer_norm_20250616_2847",
+    "step_index": 0,
+    "created_at": "2026-06-16T10:43:02Z"
+  }
+}

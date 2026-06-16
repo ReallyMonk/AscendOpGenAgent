@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>性能优化报告 - exp_2026_06_06_litebench</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f6f8fa;
+  color: #1f2328;
+  line-height: 1.6;
+  padding: 24px;
+}
+.container { max-width: 1240px; margin: 0 auto; }
+
+header {
+  background: linear-gradient(135deg, #0969da 0%, #218bff 100%);
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(9, 105, 218, 0.2);
+}
+header h1 { font-size: 32px; margin-bottom: 12px; font-weight: 700; }
+header .meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 14px; margin-bottom: 16px; }
+header .meta span { background: rgba(255, 255, 255, 0.18); padding: 4px 12px; border-radius: 16px; }
+header .meta strong { font-weight: 600; }
+
+.env-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+}
+.env-cell { display: flex; flex-direction: column; padding: 4px 8px; }
+.env-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
+.env-value { font-size: 14px; font-weight: 600; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.card {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(31, 35, 40, 0.04);
+}
+.card .label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #656d76;
+  margin-bottom: 8px;
+}
+.card .value { font-size: 28px; font-weight: 700; color: #1f2328; }
+.card.highlight { background: linear-gradient(135deg, #dafbe1 0%, #aceebb 100%); border-color: #1a7f37; }
+.card.highlight .value { color: #1a7f37; }
+.card .unit { font-size: 14px; color: #656d76; margin-left: 4px; font-weight: 500; }
+
+.op-section {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(31, 35, 40, 0.04);
+}
+.op-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #d0d7de;
+}
+.op-header h2 { font-size: 22px; color: #0969da; }
+.op-subtitle { font-size: 13px; color: #656d76; }
+
+.section {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.section:last-child { margin-bottom: 0; }
+.section h3 {
+  font-size: 16px;
+  margin-bottom: 14px;
+  color: #1f2328;
+  font-weight: 600;
+}
+.chart-container { position: relative; height: 360px; margin-bottom: 12px; }
+.note { font-size: 13px; color: #656d76; }
+.muted { font-size: 14px; color: #656d76; font-style: italic; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; background: #ffffff; border-radius: 6px; overflow: hidden; }
+th {
+  background: #f6f8fa;
+  text-align: left;
+  padding: 12px;
+  color: #656d76;
+  font-weight: 600;
+  border-bottom: 1px solid #d0d7de;
+}
+td { padding: 12px; border-bottom: 1px solid #eaeef2; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f6f8fa; }
+.speedup-high { color: #1a7f37; font-weight: 700; }
+.speedup-mid { color: #9a6700; font-weight: 700; }
+.speedup-low { color: #cf222e; font-weight: 700; }
+
+.kc-group { margin-bottom: 16px; }
+.kc-group:last-child { margin-bottom: 0; }
+.kc-group h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #0969da;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  background: rgba(9, 105, 218, 0.08);
+  border-left: 3px solid #0969da;
+  border-radius: 0 4px 4px 0;
+  font-weight: 700;
+}
+.kc-item {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.kc-item:last-child { margin-bottom: 0; }
+.kc-item .kc-title { font-size: 15px; font-weight: 600; color: #1f2328; margin-bottom: 2px; }
+.kc-item .kc-id { font-size: 11px; color: #656d76; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.kc-item .kc-app { font-size: 14px; color: #1f2328; margin-top: 6px; }
+
+.conclusion {
+  background: linear-gradient(135deg, rgba(9, 105, 218, 0.08) 0%, rgba(33, 139, 255, 0.08) 100%);
+  border-left: 4px solid #1a7f37;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(9, 105, 218, 0.2);
+  border-left-width: 4px;
+}
+.conclusion p { margin-bottom: 8px; color: #1f2328; }
+.conclusion p:last-child { margin-bottom: 0; }
+.conclusion strong { color: #1a7f37; }
+
+.op-table-wrap { overflow-x: auto; }
+.op-table-wrap table { table-layout: auto; }
+.op-table-wrap th:first-child, .op-table-wrap td:first-child {
+  min-width: 140px;
+}
+.op-table-wrap .op-summary-name {
+  background: rgba(9, 105, 218, 0.08);
+  color: #0969da;
+  font-weight: 600;
+  border-top: 2px solid #0969da;
+  border-bottom: 1px solid #d0d7de;
+}
+.op-table-wrap .op-summary-meta { color: #656d76; font-weight: 500; font-size: 12px; }
+.op-table-wrap .op-summary-shape {
+  color: #656d76;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+}
+.op-table-wrap .op-summary-num {
+  background: rgba(9, 105, 218, 0.08);
+  font-weight: 600;
+  border-top: 2px solid #0969da;
+  border-bottom: 1px solid #d0d7de;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* 算子汇总行的加速比列: 背景与其他列同为蓝底, 文字色仍按 speedup 档位 */
+.op-table-wrap .op-summary-num.speedup-high {
+  background: rgba(9, 105, 218, 0.08);
+  color: #1a7f37;
+  font-weight: 700;
+}
+.op-table-wrap .op-summary-num.speedup-mid {
+  background: rgba(9, 105, 218, 0.08);
+  color: #9a6700;
+  font-weight: 700;
+}
+.op-table-wrap .op-summary-num.speedup-low {
+  background: rgba(9, 105, 218, 0.08);
+  color: #cf222e;
+  font-weight: 700;
+}
+.op-table-wrap .op-name-indent {
+  font-size: 12px;
+  color: #656d76;
+  padding-left: 20px;
+  white-space: nowrap;
+}
+.op-table-wrap .op-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+footer { text-align: center; color: #656d76; font-size: 12px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📊 性能优化报告</h1>
+    <div class="meta">
+      <span>实验: <strong>exp_2026_06_06_litebench</strong></span>
+      <span>2026-06-06T14:23:00+08:00</span>
+    </div>
+    <div class="env-grid"><div class="env-cell"><span class="env-label">设备</span><span class="env-value">Ascend 910B</span></div><div class="env-cell"><span class="env-label">NPU 型号</span><span class="env-value">Ascend 910B</span></div><div class="env-cell"><span class="env-label">CANN</span><span class="env-value">CANN 8.0.RC2</span></div><div class="env-cell"><span class="env-label">SOC</span><span class="env-value">Ascend910B1</span></div><div class="env-cell"><span class="env-label">驱动版本</span><span class="env-value">24.1.rc2</span></div><div class="env-cell"><span class="env-label">NPU 显存 (GB)</span><span class="env-value">64</span></div><div class="env-cell"><span class="env-label">PyTorch</span><span class="env-value">2.1.0</span></div><div class="env-cell"><span class="env-label">torch_npu</span><span class="env-value">2.1.0.post6</span></div></div>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">测试算子数</div>
+      <div class="value">3</div>
+    </div>
+    <div class="card">
+      <div class="label">总 Shape 数</div>
+      <div class="value">10</div>
+    </div>
+    <div class="card highlight">
+      <div class="label">整体加速比</div>
+      <div class="value">6.29<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最大 / 最小加速比</div>
+      <div class="value">8.16<span class="unit">x</span> / 4.84<span class="unit">x</span></div>
+    </div>
+  </div>
+
+  <div class="section"><h3>算子总表 (各算子 × 各 shape 优化效果一览)</h3><p class="note">每一行对应一个 shape 的实测数据, 算子名前的 “└” 表示该 shape 隶属于上方蓝色背景的算子。加速比 = AscendC 优化前 / AscendC 优化后。</p><div class="op-table-wrap"><table><thead><tr><th>算子</th><th>Shape</th><th>加速比</th><th>PyTorch (ms)</th><th>AscendC 优化前 (ms)</th><th>AscendC 优化后 (ms)</th></tr></thead><tbody><tr><td class="op-summary-name">📦 <strong>add_rms_norm</strong></td><td class="op-summary-name op-summary-shape">4 shapes</td><td class="op-summary-num speedup-high">6.9575x</td><td class="op-summary-num">1.3900</td><td class="op-summary-num">4.2286</td><td class="op-summary-num">0.6078</td></tr>
+<tr><td class="op-name-indent">└ add_rms_norm</td><td>M=128, N=128 (small)</td><td class="speedup-high op-num">5.9390x</td><td class="op-num">0.1520</td><td class="op-num">0.4870</td><td class="op-num">0.0820</td></tr>
+<tr><td class="op-name-indent">└ add_rms_norm</td><td>M=512, N=512 (medium)</td><td class="speedup-high op-num">6.4406x</td><td class="op-num">0.6210</td><td class="op-num">1.8420</td><td class="op-num">0.2860</td></tr>
+<tr><td class="op-name-indent">└ add_rms_norm</td><td>M=2048, N=2048 (large)</td><td class="speedup-high op-num">7.5036x</td><td class="op-num">3.1480</td><td class="op-num">9.3270</td><td class="op-num">1.2430</td></tr>
+<tr><td class="op-name-indent">└ add_rms_norm</td><td>M=4096, N=4096 (xlarge)</td><td class="speedup-high op-num">8.1639x</td><td class="op-num">12.5640</td><td class="op-num">38.2150</td><td class="op-num">4.6810</td></tr>
+<tr><td class="op-summary-name">📦 <strong>layer_norm</strong></td><td class="op-summary-name op-summary-shape">3 shapes</td><td class="op-summary-num speedup-high">6.4033x</td><td class="op-summary-num">0.5315</td><td class="op-summary-num">1.4077</td><td class="op-summary-num">0.2198</td></tr>
+<tr><td class="op-name-indent">└ layer_norm</td><td>M=256, N=768 (BERT-base)</td><td class="speedup-high op-num">5.2195x</td><td class="op-num">0.0870</td><td class="op-num">0.2140</td><td class="op-num">0.0410</td></tr>
+<tr><td class="op-name-indent">└ layer_norm</td><td>M=1024, N=1024</td><td class="speedup-high op-num">6.2378x</td><td class="op-num">0.3310</td><td class="op-num">0.8920</td><td class="op-num">0.1430</td></tr>
+<tr><td class="op-name-indent">└ layer_norm</td><td>M=4096, N=4096</td><td class="speedup-high op-num">8.0640x</td><td class="op-num">5.2140</td><td class="op-num">14.6120</td><td class="op-num">1.8120</td></tr>
+<tr><td class="op-summary-name">📦 <strong>softmax</strong></td><td class="op-summary-name op-summary-shape">3 shapes</td><td class="op-summary-num speedup-high">5.4121x</td><td class="op-summary-num">0.8621</td><td class="op-summary-num">2.9609</td><td class="op-summary-num">0.5471</td></tr>
+<tr><td class="op-name-indent">└ softmax</td><td>M=128, N=1024 (small batch)</td><td class="speedup-high op-num">4.8421x</td><td class="op-num">0.0520</td><td class="op-num">0.1840</td><td class="op-num">0.0380</td></tr>
+<tr><td class="op-name-indent">└ softmax</td><td>M=512, N=8192</td><td class="speedup-high op-num">5.5899x</td><td class="op-num">0.9870</td><td class="op-num">3.4210</td><td class="op-num">0.6120</td></tr>
+<tr><td class="op-name-indent">└ softmax</td><td>M=2048, N=32768</td><td class="speedup-high op-num">5.8568x</td><td class="op-num">12.4820</td><td class="op-num">41.2380</td><td class="op-num">7.0410</td></tr></tbody></table></div></div>
+
+  
+<div class="op-section">
+  <div class="op-header">
+    <h2>算子 1: add_rms_norm</h2>
+    <div class="op-subtitle">4 个测试 shape</div>
+  </div>
+
+  <div class="cards op-cards">
+    <div class="card">
+      <div class="label">测试 Shape 数</div>
+      <div class="value">4</div>
+    </div>
+    <div class="card highlight">
+      <div class="label">加速比</div>
+      <div class="value">6.96<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最大加速比</div>
+      <div class="value">8.16<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最小加速比</div>
+      <div class="value">5.94<span class="unit">x</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>加速比对比 (AscendC 优化前 vs 优化后)</h3>
+    <div class="chart-container">
+      <canvas id="opChart_1_add_rms_norm"></canvas>
+    </div>
+    <p class="note">注: PyTorch 参考速度仅作对比参考, 主加速比基于 AscendC 优化前后计算。</p>
+  </div>
+
+  <div class="section">
+    <h3>详细数据</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>PyTorch (ms)</th>
+          <th>AscendC 优化前 (ms)</th>
+          <th>AscendC 优化后 (ms)</th>
+          <th>优化加速比</th>
+          <th>vs PyTorch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>M=128, N=128 (small)</td><td>0.1520</td><td>0.4870</td><td>0.0820</td><td class="speedup-high">5.94x</td><td>1.85x</td></tr>
+<tr><td>M=512, N=512 (medium)</td><td>0.6210</td><td>1.8420</td><td>0.2860</td><td class="speedup-high">6.44x</td><td>2.17x</td></tr>
+<tr><td>M=2048, N=2048 (large)</td><td>3.1480</td><td>9.3270</td><td>1.2430</td><td class="speedup-high">7.50x</td><td>2.53x</td></tr>
+<tr><td>M=4096, N=4096 (xlarge)</td><td>12.5640</td><td>38.2150</td><td>4.6810</td><td class="speedup-high">8.16x</td><td>2.68x</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section"><h3>优化技巧 (来自知识卡片)</h3><div class="kc-group">
+<h3>compute</h3>
+<div class="kc-item">
+<div class="kc-title">f16 向量化计算</div>
+<div class="kc-id">vec_compute_f16</div>
+<div class="kc-app">在 M/N 维度开启 SIMD 向量, 算子内计算吞吐量 +60%</div>
+</div>
+</div>
+<div class="kc-group">
+<h3>fusion</h3>
+<div class="kc-item">
+<div class="kc-title">RMS 算子融合</div>
+<div class="kc-id">tile_fusion_rms</div>
+<div class="kc-app">在 tiling 粒度上把 add + rms_norm 一次完成, 减少一次 GM 读写</div>
+</div>
+</div>
+<div class="kc-group">
+<h3>scheduling</h3>
+<div class="kc-item">
+<div class="kc-title">双缓冲流水线</div>
+<div class="kc-id">double_buffer</div>
+<div class="kc-app">Compute / DataMove 并行, 隐藏 GM 搬运延迟</div>
+</div>
+</div>
+<div class="kc-group">
+<h3>tiling</h3>
+<div class="kc-item">
+<div class="kc-title">2D 分块策略 v3</div>
+<div class="kc-id">tiling_2d_v3</div>
+<div class="kc-app">按 (M, N) 维度 64x64 分块, 提升 L2 命中率至 87%</div>
+</div>
+</div></div>
+</div>
+
+
+<div class="op-section">
+  <div class="op-header">
+    <h2>算子 2: layer_norm</h2>
+    <div class="op-subtitle">3 个测试 shape</div>
+  </div>
+
+  <div class="cards op-cards">
+    <div class="card">
+      <div class="label">测试 Shape 数</div>
+      <div class="value">3</div>
+    </div>
+    <div class="card highlight">
+      <div class="label">加速比</div>
+      <div class="value">6.40<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最大加速比</div>
+      <div class="value">8.06<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最小加速比</div>
+      <div class="value">5.22<span class="unit">x</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>加速比对比 (AscendC 优化前 vs 优化后)</h3>
+    <div class="chart-container">
+      <canvas id="opChart_2_layer_norm"></canvas>
+    </div>
+    <p class="note">注: PyTorch 参考速度仅作对比参考, 主加速比基于 AscendC 优化前后计算。</p>
+  </div>
+
+  <div class="section">
+    <h3>详细数据</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>PyTorch (ms)</th>
+          <th>AscendC 优化前 (ms)</th>
+          <th>AscendC 优化后 (ms)</th>
+          <th>优化加速比</th>
+          <th>vs PyTorch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>M=256, N=768 (BERT-base)</td><td>0.0870</td><td>0.2140</td><td>0.0410</td><td class="speedup-high">5.22x</td><td>2.12x</td></tr>
+<tr><td>M=1024, N=1024</td><td>0.3310</td><td>0.8920</td><td>0.1430</td><td class="speedup-high">6.24x</td><td>2.31x</td></tr>
+<tr><td>M=4096, N=4096</td><td>5.2140</td><td>14.6120</td><td>1.8120</td><td class="speedup-high">8.06x</td><td>2.88x</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section"><h3>优化技巧 (来自知识卡片)</h3><div class="kc-group">
+<h3>compute</h3>
+<div class="kc-item">
+<div class="kc-title">Welford 融合均值方差</div>
+<div class="kc-id">welford_fusion</div>
+<div class="kc-app">在单次遍历中同时累计 mean 和 var, 减少一次扫描</div>
+</div>
+</div>
+<div class="kc-group">
+<h3>memory</h3>
+<div class="kc-item">
+<div class="kc-title">32B UB 对齐</div>
+<div class="kc-id">ub_align_32b</div>
+<div class="kc-app">对 N 维按 8 元素对齐(32B), 避免 vector 跨步访存</div>
+</div>
+</div></div>
+</div>
+
+
+<div class="op-section">
+  <div class="op-header">
+    <h2>算子 3: softmax</h2>
+    <div class="op-subtitle">3 个测试 shape</div>
+  </div>
+
+  <div class="cards op-cards">
+    <div class="card">
+      <div class="label">测试 Shape 数</div>
+      <div class="value">3</div>
+    </div>
+    <div class="card highlight">
+      <div class="label">加速比</div>
+      <div class="value">5.41<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最大加速比</div>
+      <div class="value">5.86<span class="unit">x</span></div>
+    </div>
+    <div class="card">
+      <div class="label">最小加速比</div>
+      <div class="value">4.84<span class="unit">x</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>加速比对比 (AscendC 优化前 vs 优化后)</h3>
+    <div class="chart-container">
+      <canvas id="opChart_3_softmax"></canvas>
+    </div>
+    <p class="note">注: PyTorch 参考速度仅作对比参考, 主加速比基于 AscendC 优化前后计算。</p>
+  </div>
+
+  <div class="section">
+    <h3>详细数据</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>PyTorch (ms)</th>
+          <th>AscendC 优化前 (ms)</th>
+          <th>AscendC 优化后 (ms)</th>
+          <th>优化加速比</th>
+          <th>vs PyTorch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>M=128, N=1024 (small batch)</td><td>0.0520</td><td>0.1840</td><td>0.0380</td><td class="speedup-high">4.84x</td><td>1.37x</td></tr>
+<tr><td>M=512, N=8192</td><td>0.9870</td><td>3.4210</td><td>0.6120</td><td class="speedup-high">5.59x</td><td>1.61x</td></tr>
+<tr><td>M=2048, N=32768</td><td>12.4820</td><td>41.2380</td><td>7.0410</td><td class="speedup-high">5.86x</td><td>1.77x</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section"><h3>优化技巧 (来自知识卡片)</h3><div class="kc-group">
+<h3>compute</h3>
+<div class="kc-item">
+<div class="kc-title">Online Softmax</div>
+<div class="kc-id">online_softmax</div>
+<div class="kc-app">采用 online 算法, 单次遍历同时更新 max 和 sum exp, 减少 GM 读写</div>
+</div>
+<div class="kc-item">
+<div class="kc-title">Vector exp 近似</div>
+<div class="kc-id">vec_exp_approx</div>
+<div class="kc-app">使用近似 exp(8 元素 vector), 误差 &lt;1e-5 但速度 +40%</div>
+</div>
+</div></div>
+</div>
+
+
+  <div class="op-section"><div class="op-header"><h2>实验级知识卡片</h2><div class="op-subtitle">本次实验共享</div></div><div class="section"><h3>优化技巧 (全局)</h3><div class="kc-group">
+<h3>scheduling</h3>
+<div class="kc-item">
+<div class="kc-title">Ascend 910B 最佳实践汇总</div>
+<div class="kc-id">ascend910b_best_practice</div>
+<div class="kc-app">本次实验所有算子均严格遵守: 双缓冲 + UB 对齐 + 2D 分块</div>
+</div>
+</div></div></div>
+
+  <div class="op-section">
+    <div class="op-header">
+      <h2>整体结论</h2>
+      <div class="op-subtitle">综合所有算子</div>
+    </div>
+    <div class="conclusion"><p>本次实验在 <strong>3</strong> 个算子、合计 <strong>10</strong> 个 shape 上完成测试。</p><p>整体几何平均优化加速比: <strong>6.29x</strong>, <strong>显著加速</strong>, 优化效果突出。</p><p>实验过程中参考了 <strong>1</strong> 张知识卡片, 为系统性的优化策略提供指导。</p></div>
+  </div>
+
+  <footer>由 kope agent + performance-report skill 生成</footer>
+</div>
+
+<script>
+
+new Chart(document.getElementById('opChart_1_add_rms_norm').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ["M=128, N=128 (small)", "M=512, N=512 (medium)", "M=2048, N=2048 (large)", "M=4096, N=4096 (xlarge)"],
+    datasets: [
+      {
+        label: 'PyTorch (参考)',
+        data: [0.152, 0.621, 3.148, 12.564],
+        backgroundColor: 'rgba(101, 109, 118, 0.5)',
+        borderColor: 'rgba(101, 109, 118, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化前',
+        data: [0.487, 1.842, 9.327, 38.215],
+        backgroundColor: 'rgba(207, 34, 46, 0.6)',
+        borderColor: 'rgba(207, 34, 46, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化后',
+        data: [0.082, 0.286, 1.243, 4.681],
+        backgroundColor: 'rgba(26, 127, 55, 0.7)',
+        borderColor: 'rgba(26, 127, 55, 1)',
+        borderWidth: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { color: '#1f2328' } },
+      title: { display: false }
+    },
+    scales: {
+      x: { ticks: { color: '#1f2328' }, grid: { color: '#eaeef2' } },
+      y: {
+        ticks: { color: '#1f2328' },
+        grid: { color: '#eaeef2' },
+        title: { display: true, text: '耗时 (ms)', color: '#656d76' }
+      }
+    }
+  }
+});
+
+
+new Chart(document.getElementById('opChart_2_layer_norm').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ["M=256, N=768 (BERT-base)", "M=1024, N=1024", "M=4096, N=4096"],
+    datasets: [
+      {
+        label: 'PyTorch (参考)',
+        data: [0.087, 0.331, 5.214],
+        backgroundColor: 'rgba(101, 109, 118, 0.5)',
+        borderColor: 'rgba(101, 109, 118, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化前',
+        data: [0.214, 0.892, 14.612],
+        backgroundColor: 'rgba(207, 34, 46, 0.6)',
+        borderColor: 'rgba(207, 34, 46, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化后',
+        data: [0.041, 0.143, 1.812],
+        backgroundColor: 'rgba(26, 127, 55, 0.7)',
+        borderColor: 'rgba(26, 127, 55, 1)',
+        borderWidth: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { color: '#1f2328' } },
+      title: { display: false }
+    },
+    scales: {
+      x: { ticks: { color: '#1f2328' }, grid: { color: '#eaeef2' } },
+      y: {
+        ticks: { color: '#1f2328' },
+        grid: { color: '#eaeef2' },
+        title: { display: true, text: '耗时 (ms)', color: '#656d76' }
+      }
+    }
+  }
+});
+
+
+new Chart(document.getElementById('opChart_3_softmax').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ["M=128, N=1024 (small batch)", "M=512, N=8192", "M=2048, N=32768"],
+    datasets: [
+      {
+        label: 'PyTorch (参考)',
+        data: [0.052, 0.987, 12.482],
+        backgroundColor: 'rgba(101, 109, 118, 0.5)',
+        borderColor: 'rgba(101, 109, 118, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化前',
+        data: [0.184, 3.421, 41.238],
+        backgroundColor: 'rgba(207, 34, 46, 0.6)',
+        borderColor: 'rgba(207, 34, 46, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'AscendC 优化后',
+        data: [0.038, 0.612, 7.041],
+        backgroundColor: 'rgba(26, 127, 55, 0.7)',
+        borderColor: 'rgba(26, 127, 55, 1)',
+        borderWidth: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { color: '#1f2328' } },
+      title: { display: false }
+    },
+    scales: {
+      x: { ticks: { color: '#1f2328' }, grid: { color: '#eaeef2' } },
+      y: {
+        ticks: { color: '#1f2328' },
+        grid: { color: '#eaeef2' },
+        title: { display: true, text: '耗时 (ms)', color: '#656d76' }
+      }
+    }
+  }
+});
+
+</script>
+</body>
+</html>

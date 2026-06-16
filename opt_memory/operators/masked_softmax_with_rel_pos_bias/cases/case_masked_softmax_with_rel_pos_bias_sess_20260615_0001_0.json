@@ -1,0 +1,58 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_masked_softmax_with_rel_pos_bias_sess_20260615_0001_0",
+  "kernel": {
+    "name": "masked_softmax_with_rel_pos_bias",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/masked_softmax_with_rel_pos_bias/kernel/msrpb_kernel.h"
+  },
+  "thought": {
+    "id": "msrpb_baseline_align",
+    "title": "Baseline-aligned masked softmax kernel with merge_n batching",
+    "description": "Aligned AscendC kernel with CANNBench baseline reference. Single MSRPBKernel with CopyTiling, TQue-based per-row processing. Vectorized Cast(qk+bias→fp32), Add, Adds, Exp, Muls operations. Scalar mask comparison and sum (unavoidable due to AscendC Select API requiring uint8 selMask incompatible with CompareScalar float output). Merge_n batching with rowFactor up to 8 to amortize TQue overhead. PipeBarrier after vector ops before scalar reads for correctness.",
+    "reason": "Initial approach with vectorized sub-tensor views (workF32[rowOff]) and merge_n-single_row split failed due to AscendC sub-tensor unreliability and DataCopy alignment issues. Baseline-aligned approach proved correct. Scalar mask unavoidable - CompareScalar produces float bit patterns incompatible with Select's uint8 selMask requirement.",
+    "opt_layer": "pipeline",
+    "target_bottleneck": "scalar mask+sum per-row, TQue per-row overhead",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B,W,N,S1,S2] M=16K-262K N=512-2048",
+    "dtype": "float16",
+    "data_tags": [
+      "masked_softmax",
+      "attention",
+      "challenge"
+    ],
+    "task_tags": [
+      "CANNBench-Lite",
+      "optimization",
+      "anchor"
+    ]
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 0.03
+  },
+  "chain": {
+    "session_id": "sess_masked_softmax_with_rel_pos_bias_20250615_0001",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "msrpb_baseline_align"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T16:14:20Z"
+  }
+}

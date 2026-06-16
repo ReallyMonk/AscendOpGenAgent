@@ -1,0 +1,52 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_swi_glu_sess_20260615_4d7f_3",
+  "kernel": {
+    "name": "swi_glu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "swiglu_64cores",
+    "title": "32→64 cores: 对当前 shape 无效（块数不足）",
+    "description": "将 DEFAULT_NUM_PHYSICAL_CORES 从 32 增加到 64。对当前 M=4096 无影响（32 块已用完 32 核）。",
+    "reason": "M=4096, BLOCK_M=128 → 32 块，不超过 32 核。增加核数对更大 M 有益。",
+    "opt_layer": "core_partition",
+    "target_bottleneck": "块数不足，无法利用更多核",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[4096,37888] fp16",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.002
+  },
+  "chain": {
+    "session_id": "sess_20260615_4d7f",
+    "step_index": 3,
+    "prev_thought_id": "swiglu_exp_silu",
+    "prev_case_id": "case_swi_glu_sess_20260615_4d7f_2",
+    "full_sequence_hint": [
+      "swiglu_chunk_256",
+      "swiglu_exp_silu",
+      "swiglu_64cores"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 3,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T15:00:40Z"
+  }
+}

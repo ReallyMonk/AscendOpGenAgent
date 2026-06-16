@@ -1,0 +1,11 @@
+{
+  "case_gelu_mul_sess_20260615_8842_0": {
+    "path": "case_gelu_mul_sess_20260615_8842_0.json",
+    "thought_id": "gm_chunk_256",
+    "thought_title": "GM_CHUNK 64→256 大块向量化 + bf16边界转换",
+    "label": "effective",
+    "session_id": "sess_gelu_mul_20250614_8842",
+    "step_index": 0,
+    "created_at": "2026-06-15T16:07:28Z"
+  }
+}

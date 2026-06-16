@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_swi_glu_sess_20260615_4d7f_2",
+  "kernel": {
+    "name": "swi_glu",
+    "category": "activation",
+    "compute_type": "compute_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "swiglu_exp_silu",
+    "title": "Exp-based SiLU: 替换 tanh 为 exp 指令加速",
+    "description": "将 sigmoid 计算从 tanh 版本 (Muls→Tanh→Adds→Muls) 替换为 exp 版本 (Muls→Exp→Adds→Reciprocal)。Exp 在 Ascend 上延迟更低。",
+    "reason": "Ascend 910B 的 Exp 向量指令延迟低于 Tanh，在保持精度前提下提升 1.58x。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "Tanh 指令延迟、计算瓶颈",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[4096,37888] fp16",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.586
+  },
+  "chain": {
+    "session_id": "sess_20260615_4d7f",
+    "step_index": 2,
+    "prev_thought_id": "swiglu_chunk_256",
+    "prev_case_id": "case_swi_glu_sess_20260615_4d7f_1",
+    "full_sequence_hint": [
+      "swiglu_chunk_256",
+      "swiglu_exp_silu"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 2,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T15:00:40Z"
+  }
+}

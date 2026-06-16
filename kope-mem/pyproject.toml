@@ -11,10 +11,12 @@ dependencies = [
 
 [project.optional-dependencies]
 reme = ["reme-light>=0.5.0"]
+mcp = ["modelcontextprotocol>=1.0.0"]
 dev = ["pytest", "ruff"]
 
 [project.scripts]
 kope-mem = "kope_mem.cli:app"
+kope-mem-mcp = "kope_mem.mcp_server:main"
 
 [build-system]
 requires = ["hatchling"]

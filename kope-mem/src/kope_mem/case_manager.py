@@ -45,7 +45,11 @@ def _load_index(operator: str, working_dir: str = ".") -> dict:
     idx_path = get_case_index_path(operator, working_dir)
     if idx_path.exists():
         with open(idx_path) as f:
-            return json.load(f)
+            data = json.load(f)
+        # 防御：若文件被其他工具写成了 list，重置为空字典
+        if isinstance(data, list):
+            return {}
+        return data
     return {}
 
 

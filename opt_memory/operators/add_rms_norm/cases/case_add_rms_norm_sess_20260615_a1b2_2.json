@@ -1,0 +1,52 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_rms_norm_sess_20260615_a1b2_2",
+  "kernel": {
+    "name": "add_rms_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "tune_blockm_64",
+    "title": "Tune BlockM 128→64 for Load Balancing",
+    "description": "Changed DEFAULT_BLOCK_M from 128 to 64 for better load balancing across 32 cores. For M=4096: blocks increase from 32 to 64, tasksPerCore from 1 to 2. For small M (e.g., M=1024): 16 cores used vs 8, doubling core utilization.",
+    "reason": "With blockM=128 and small M (1024), only ceil(1024/128)=8 blocks → 8 cores used out of 32. With blockM=64: ceil(1024/64)=16 blocks → 16 cores used. Doubles parallelism for small batches without hurting large batches.",
+    "opt_layer": "core_partition",
+    "target_bottleneck": "Load balancing for small M batches",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=4096, N=3584",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.02
+  },
+  "chain": {
+    "session_id": "sess_add_rms_norm_20260615_a1b2",
+    "step_index": 2,
+    "prev_thought_id": "tbuf_reducesum_vectorize",
+    "prev_case_id": "case_add_rms_norm_sess_20260615_a1b2_1",
+    "full_sequence_hint": [
+      "baseline_tque_scalar",
+      "tbuf_reducesum_vectorize",
+      "tune_blockm_64"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 2,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T16:33:11Z"
+  }
+}

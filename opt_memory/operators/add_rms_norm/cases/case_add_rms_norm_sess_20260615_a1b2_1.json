@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_rms_norm_sess_20260615_a1b2_1",
+  "kernel": {
+    "name": "add_rms_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "tbuf_reducesum_vectorize",
+    "title": "TBuf Direct Copy + ReduceSum Vectorization",
+    "description": "Replaced TQue (xInQ_/rInQ_/yOutQ_) with TBuf (xBuf_/rBuf_/yBuf_) + direct DataCopy for input/output. Replaced scalar sum-of-squares loop with Mul+ReduceSum vector instructions. Added reduceOut_ (1 float) and reduceTmp_ (512 floats) TBuf. Eliminated ~32K AllocTensor/EnQue/DeQue/FreeTensor calls for 4096 rows.",
+    "reason": "TQue per-row overhead dominates: each row requires 3× AllocTensor + 3× EnQue + 3× DeQue + 3× FreeTensor. For 4096 rows this is ~49K TQue API calls. Using TBuf+DataCopy eliminates all TQue overhead, and ReduceSum vectorizes the 3584-element scalar reduction. Combined: 22.8x speedup.",
+    "opt_layer": "tiling",
+    "target_bottleneck": "TQue per-row overhead → DataCopy latency dominant",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=4096, N=3584",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 22.8
+  },
+  "chain": {
+    "session_id": "sess_add_rms_norm_20260615_a1b2",
+    "step_index": 1,
+    "prev_thought_id": "baseline_tque_scalar",
+    "prev_case_id": "case_add_rms_norm_sess_20260615_a1b2_0",
+    "full_sequence_hint": [
+      "baseline_tque_scalar",
+      "tbuf_reducesum_vectorize"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T16:33:05Z"
+  }
+}

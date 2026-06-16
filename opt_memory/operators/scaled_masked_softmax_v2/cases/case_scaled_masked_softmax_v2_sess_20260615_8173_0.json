@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_scaled_masked_softmax_v2_sess_20260615_8173_0",
+  "kernel": {
+    "name": "scaled_masked_softmax_v2",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/scaled_masked_softmax_v2/kernel/"
+  },
+  "thought": {
+    "id": "sms_v2_vec_reduce",
+    "title": "向量化归约替代标量循环：scale+mask+max+sum 全向量化",
+    "description": "将 baseline 中 4 个标量循环全部替换为向量化 AscendC API：Muls(scale)、CompareScalar+Select(mask)、ReduceMax(max)、ReduceSum(sum)。Baseline 每行 O(N) 标量迭代，优化后 reduce_max/reduce_sum 为 O(log N) 向量归约，scale/mask 为单指令向量操作。额外引入 merge-n 双路径：N<=1024 使用 rowFactor=4 合并 4 行同时处理摊销 load 开销",
+    "reason": "Baseline 瓶颈明确：每行 softmax 有 3 个 O(N) 标量循环（scale+mask、max、sum），对 S=2048 影响显著。向量化后延迟从 O(N) 降为 O(log N)，合并多行减少 GM→UB transaction 次数。双路径确保小 shape 不浪费 UB、大 shape 不溢 UB",
+    "opt_layer": "instruction",
+    "target_bottleneck": "scalar max/sum/scale+mask loops; single-row GM-UB transactions",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B,N,S,S] with S in {512,1024,2048}",
+    "dtype": "float16",
+    "data_tags": [
+      "attention",
+      "softmax",
+      "masked",
+      "scaled"
+    ],
+    "task_tags": [
+      "vfusion",
+      "transfer_probe",
+      "challenge"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.745
+  },
+  "chain": {
+    "session_id": "sess_scaled_masked_softmax_v2_20260614_8173",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "sms_v2_vec_reduce"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "// Baseline: scalar loops for scale+mask, max, sum\nfor (int32_t i=0; i<N; ++i) {\n    float v = qkFp32(i) * scale;\n    qkFp32(i) = (maskFp32(i)==0.0f) ? NEG_INF : v;\n}\nfloat maxVal = qkFp32(0);\nfor (int32_t i=1; i<N; ++i) { float v=qkFp32(i); if(v>maxVal) maxVal=v; }\n// ... exp, sum scalar loop ...",
+    "dsl_after": "// Optimized: vectorized\nAscendC::Muls(qkFp32, qkFp32, scale, N);\nAscendC::CompareScalar(cmpMask, maskFp32, 0.0f, CMPMODE::EQ, N);\nAscendC::Duplicate(negInf, NEG_INF, N);\nAscendC::Select(qkFp32, cmpMask, negInf, qkFp32, VSEL_CMPMASK_SPR, N);\nAscendC::ReduceMax(perMax, qkFp32, reduceWork, N);\nAscendC::ReduceSum(perSum, qkFp32, reduceWork, N);\n// Merge-n: rowFactor=4 for N<=1024",
+    "profiling_path": "",
+    "created_at": "2026-06-15T16:36:40Z"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "case_avg_pool2d_sess_20260613_5827_0": {
+    "path": "case_avg_pool2d_sess_20260613_5827_0.json",
+    "thought_id": "avg_pool2d_baseline_scalar",
+    "thought_title": "avg_pool2d Baseline Scalar Implementation",
+    "label": "ineffective",
+    "session_id": "sess_avg_pool2d_20250613_5827",
+    "step_index": 0,
+    "created_at": "2026-06-13T14:08:22Z"
+  },
+  "case_avg_pool2d_sess_20260615_0001_0": {
+    "path": "case_avg_pool2d_sess_20260615_0001_0.json",
+    "thought_id": "ap_scalar_baseline",
+    "thought_title": "avg_pool2d 标量基线 kernel",
+    "label": "effective",
+    "session_id": "sess_avg_pool2d_20250615_0001",
+    "step_index": 0,
+    "created_at": "2026-06-15T19:25:48Z"
+  },
+  "case_avg_pool2d_sess_20260616_4823_0": {
+    "path": "case_avg_pool2d_sess_20260616_4823_0.json",
+    "thought_id": "pooling_nhwc_vectorized_v1",
+    "thought_title": "avg_pool2d NHWC向量化优化",
+    "label": "effective",
+    "session_id": "sess_avg_pool2d_20250711_4823",
+    "step_index": 0,
+    "created_at": "2026-06-16T12:02:02Z"
+  }
+}

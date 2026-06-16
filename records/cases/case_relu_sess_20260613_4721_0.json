@@ -1,0 +1,58 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_relu_sess_20260613_4721_0",
+  "kernel": {
+    "name": "relu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "Relu(fp16) direct, rowFactor=8 batch for N<=2048"
+  },
+  "thought": {
+    "id": "fp16-direct-compute-elementwise",
+    "title": "relu Fp16-Direct-Compute-Elementwise",
+    "description": "消除 fp16/bf16 Cast 到 fp32 的中间转换，直接使用 AscendC::Relu 在原始数据类型上计算。移除 xCastBuf_/yCastBuf_ 两个中间 buffer。",
+    "reason": "Baseline 对 fp16/bf16 输入先 Cast 到 fp32，执行 Relu，再 Cast 回原始类型，每条 row 增加 2 次向量 Cast + 2 次 PipeBarrier。优化版直接调用 AscendC::Relu(yOutLocal_, xInLocal_, elemCount)，支持原生 fp16/bf16 计算，消除所有中间转换开销。",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M x N, M=[1024,4096,8192], N=[1024,3584,8192]",
+    "dtype": "float16",
+    "data_tags": "2D,activation,elementwise",
+    "task_tags": "relu,fp16,memory-bound"
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 1.02,
+    "metric_changes": {
+      "S1_speedup": 0.45,
+      "S2_speedup": 0.39,
+      "S3_speedup": 2.27,
+      "overall_speedup": 1.02
+    }
+  },
+  "chain": {
+    "session_id": "sess_relu_20260613_4721",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "Cast(fp16->fp32)->Relu(fp32)->Cast(fp32->fp16), subBlockRows loop",
+    "dsl_after": "Relu(fp16) direct, rowFactor=8 batch for N<=2048",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/relu/",
+    "created_at": "2026-06-13T18:34:02Z",
+    "updated_at": "2026-06-13T18:34:17Z"
+  }
+}

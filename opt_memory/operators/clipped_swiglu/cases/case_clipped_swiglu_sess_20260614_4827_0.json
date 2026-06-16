@@ -1,0 +1,58 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_clipped_swiglu_sess_20260614_4827_0",
+  "kernel": {
+    "name": "clipped_swiglu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "qoder_output/clipped_swiglu/kernel/clipped_swiglu_kernel.h"
+  },
+  "thought": {
+    "id": "opt_chunk256_exp_silu",
+    "title": "CS_CHUNK=256 + Exp-based SiLU + reduced vector ops",
+    "description": "Increased chunk size from 64 to 256 (4x fewer loop iterations), replaced tanh-based sigmoid (Muls*0.5+Tanh+Adds*1.0+Muls*0.5) with Exp-based SiLU (Muls*-1.0+Exp+Adds*1.0+Div), reducing vector ops from 9 to 8 per chunk iteration. Combined with 4x fewer iterations, total vector instruction count reduced significantly.",
+    "reason": "For memory-bound element-wise operators, larger chunk sizes improve vector unit utilization by reducing loop overhead and enabling more work per iteration. Exp-based SiLU uses fewer vector operations than the tanh-based approximation. The Div operation replaces Muls(x,0.5)+Tanh+Adds+Mul in the sigmoid path.",
+    "opt_layer": "instruction",
+    "target_bottleneck": "vector instruction count in element-wise compute loop",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[M,2*inter] fp16, M=1024-4096, inter=2048-29568",
+    "dtype": "float16",
+    "data_tags": [
+      "chunk_256",
+      "exp_silu",
+      "memory_bound"
+    ],
+    "task_tags": [
+      "chunk_size",
+      "vector_ops",
+      "sigmoid"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.72
+  },
+  "chain": {
+    "session_id": "sess_clipped_swiglu_20250614_4827",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "opt_chunk256_exp_silu"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "// Baseline: CS_CHUNK=64, tanh sigmoid\nfor(start=0; start<half; start+=64) {\n  Cast(gate_f32, input_half, 64); Cast(up_f32, input_half, 64);\n  Muls(x2Wk, x2Wk, 0.5f, 64); Tanh(x2Wk, x2Wk, 64);\n  Adds(x2Wk, x2Wk, 1.0f, 64); Muls(x2Wk, x2Wk, 0.5f, 64);\n  Mul(x2Wk, x2Orig, x2Wk, 64); Mins(x2Wk, x2Wk, 1.0f, 64);\n  Mul(x1Wk, x1Wk, x2Wk, 64); Cast(output_half, x1Wk, 64);\n}",
+    "dsl_after": "// Optimized: CS_CHUNK=256, Exp SiLU\nfor(start=0; start<half; start+=256) {\n  Cast(gate_f32, input_half, 256); Cast(up_f32, input_half, 256);\n  Muls(tmp, gate, -1.0f, 256); Exp(work, tmp, 256);\n  Adds(work, work, 1.0f, 256); Div(tmp, gate, work, 256);\n  Mins(tmp, tmp, 1.0f, 256); Mul(tmp, up, tmp, 256);\n  Cast(output_half, tmp, 256);\n}",
+    "profiling_path": "",
+    "created_at": "2026-06-14T18:58:12Z"
+  }
+}

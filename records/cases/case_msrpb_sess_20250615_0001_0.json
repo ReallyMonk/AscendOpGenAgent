@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_msrpb_sess_20250615_0001_0",
+  "kernel": {
+    "name": "msrpb",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "unknown",
+    "title": "msrpb Unknown",
+    "description": "",
+    "reason": "",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B,W,N,S1,S2] M=16K-262K N=512-2048",
+    "dtype": "float16",
+    "data_tags": "masked_softmax,attention,challenge",
+    "task_tags": "CANNBench-Lite,optimization,anchor"
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.98,
+    "thought_match": "low",
+    "step_improvement": 0.03,
+    "metric_changes": {
+      "task_duration_us": {}
+    }
+  },
+  "chain": {
+    "session_id": "sess_msrpb_20250615_0001",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T16:14:48Z",
+    "updated_at": "2026-06-15T16:14:53Z"
+  }
+}

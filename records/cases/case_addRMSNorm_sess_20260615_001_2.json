@@ -1,0 +1,33 @@
+{
+  "case_id": "case_addRMSNorm_sess_20260615_001_2",
+  "kernel": {
+    "name": "add_rms_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound"
+  },
+  "thought": {
+    "id": "tune_blockm_64",
+    "title": "Tune BlockM 128→64 for Load Balancing",
+    "description": "Changed DEFAULT_BLOCK_M from 128 to 64 for better load balancing across 32 cores. For M=4096: blocks increase from 32 to 64, tasksPerCore from 1 to 2. For small M (e.g., M=1024): 16 cores used vs 8.",
+    "reason": "With blockM=128 and small M (1024), only 8 blocks → 8 of 32 cores used. With blockM=64: 16 blocks → 16 cores used, doubling parallelism for small batches without hurting large batches.",
+    "opt_layer": "core_partition",
+    "target_bottleneck": "Load balancing for small M batches"
+  },
+  "scene": {
+    "shape_signature": "M=4096, N=3584",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.7,
+    "step_improvement": 1.02
+  },
+  "chain": {
+    "session_id": "sess_add_rms_norm_20260615_a1b2",
+    "step_index": 2
+  },
+  "runtime": {
+    "device": "Ascend 910B4",
+    "agent": "kope"
+  }
+}

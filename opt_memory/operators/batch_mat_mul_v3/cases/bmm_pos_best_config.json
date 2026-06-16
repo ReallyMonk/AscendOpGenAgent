@@ -1,0 +1,10 @@
+{
+  "card_id": "bmm_pos_best_config",
+  "type": "positive",
+  "title": "Best: T128x32 (3.31x avg speedup)",
+  "category": "best_configuration",
+  "technique": "Optimal tile: K=128, N=32",
+  "speedup_avg": 3.3054,
+  "lesson": "T128x32 achieves the best average speedup of 3.31x on Ascend 910B4.",
+  "timestamp": "2026-06-10T01:29:05.186974"
+}

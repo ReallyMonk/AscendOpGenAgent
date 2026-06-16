@@ -1,0 +1,58 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_cross_entropy_loss_sess_20260615_7a3f_1",
+  "kernel": {
+    "name": "cross_entropy_loss",
+    "category": "reduction",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output_fusion/cross_entropy_loss/kernel/xent_kernel.h"
+  },
+  "thought": {
+    "id": "xent_chunk2048_reduce",
+    "title": "CHUNK 64→2048 + ReduceMax/ReduceSum向量化归约",
+    "description": "将XENT_CHUNK从64增大到2048(减少循环迭代~32x)，同时使用AscendC基础API ReduceMax和ReduceSum替代标量循环进行chunk内归约。ProcessRow重构为ProcessMaxChunk/ProcessSumChunk子函数。",
+    "reason": "大chunk减少循环开销(GM→UB搬运频率降低32x); Reduce API利用Vector单元硬件加速归约，消除标量逐元素累加瓶颈",
+    "opt_layer": "tiling",
+    "target_bottleneck": "large_vocab_reduction",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=4096,V=152064",
+    "dtype": "float16",
+    "data_tags": [
+      "large_vocab",
+      "reduction",
+      "fp16"
+    ],
+    "task_tags": [
+      "cross_entropy",
+      "loss",
+      "optimization"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 2.78
+  },
+  "chain": {
+    "session_id": "sess_cross_entropy_loss_20260124_7a3f",
+    "step_index": 1,
+    "prev_thought_id": "",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "xent_chunk2048_reduce"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T16:07:43Z"
+  }
+}

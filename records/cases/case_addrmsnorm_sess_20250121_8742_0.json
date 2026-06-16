@@ -1,0 +1,36 @@
+{
+  "case_id": "case_addrmsnorm_sess_20250121_8742_0",
+  "kernel": {
+    "name": "add_rms_norm",
+    "category": "normalization",
+    "compute_type": "compute_bound"
+  },
+  "thought": {
+    "id": "reduce_sum_vectorization_v1",
+    "title": "ReduceSum 替代标量累加循环 + block_M 调优",
+    "description": "将逐元素标量累加循环 for(i=0;i<N;i++) sumSq+=v*v 替换为 AscendC::ReduceSum<float> 硬件矢量归约。O(N)→O(logN)。同时 block_M 从128调为64提升小M并行度。",
+    "reason": "对标 add_layer_norm 历史优化经验，标量循环在Vector处理器上O(N)开销极大，ReduceSum利用硬件矢量归约单元。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "标量累加循环在Vector处理器上串行执行成为主导瓶颈"
+  },
+  "scene": {
+    "shape_signature": "M=[1024..4096], N=3584",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.85,
+    "step_improvement": 1.86
+  },
+  "chain": {
+    "session_id": "sess_20250121_8742",
+    "step_index": 0
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "dsl_before": "for (int32_t i = 0; i < t_.N; ++i) { float v = addFp32(i); sumSq += v * v; }",
+    "dsl_after": "AscendC::ReduceSum<float>(reduceOut, xFp32, reduceTmp, t_.N); float sumSq = reduceOut.GetValue(0);",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/add_rms_norm/perf_data.json"
+  }
+}

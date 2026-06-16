@@ -1,0 +1,57 @@
+{
+  "case_id": "case_clippedswiglu_sess_20260614_4827_0",
+  "kernel": {
+    "name": "clipped_swiglu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "qoder_output/clipped_swiglu/kernel/clipped_swiglu_kernel.h"
+  },
+  "thought": {
+    "id": "opt_chunk256_exp_silu",
+    "title": "CS_CHUNK=256 + Exp-based SiLU + reduced vector ops",
+    "description": "Increased chunk size from 64 to 256 (4x fewer loop iterations), replaced tanh-based sigmoid with Exp-based SiLU, reducing vector ops from 9 to 8 per chunk iteration.",
+    "reason": "Larger chunks improve vector unit utilization. Exp-based SiLU uses fewer vector ops than tanh-based.",
+    "opt_layer": "instruction",
+    "target_bottleneck": "vector instruction count in element-wise compute loop",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[M,2*inter] fp16, M=1024-4096, inter=2048-29568",
+    "dtype": "float16",
+    "data_tags": [
+      "chunk_256",
+      "exp_silu",
+      "memory_bound"
+    ],
+    "task_tags": [
+      "chunk_size",
+      "vector_ops",
+      "sigmoid"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 1.72
+  },
+  "chain": {
+    "session_id": "sess_clipped_swiglu_20260614_4827",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "opt_chunk256_exp_silu"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "CS_CHUNK=64, 3 TBuf, tanh sigmoid (9 ops/chunk): Cast+Cast+Muls(x,0.5)+Tanh+Adds(1.0)+Muls(x,0.5)+Mul(x2,x)+Mins(x,1.0)+Mul(x1,x2)+Cast",
+    "dsl_after": "CS_CHUNK=256, 4 TBuf, Exp SiLU (8 ops/chunk): Cast+Cast+Muls(x,-1.0)+Exp+Adds(1.0)+Div+Mins(1.0)+Mul+Cast",
+    "profiling_path": "qoder_output/clipped_swiglu/",
+    "created_at": "2026-06-14T19:00:00Z"
+  }
+}

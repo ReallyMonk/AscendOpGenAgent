@@ -1,0 +1,50 @@
+{
+  "case_id": "case_matmulv3_sess_20260616_2387_0",
+  "kernel": {
+    "name": "mat_mul_v3",
+    "category": "matmul",
+    "compute_type": "compute_bound"
+  },
+  "thought": {
+    "id": "mmad_128_tile_double_buffer",
+    "title": "128x128 MMAD tile + 双缓冲 + Fixpipe F322F16",
+    "description": "增大MMAD tile从16→128，双缓冲(L1_PREFETCH=2)，Fixpipe L0C→GM F322F16量化输出，16核AIC并行",
+    "reason": "Round1优化：充分利用Cube单元128算力，双缓冲隐藏搬运延迟，F322F16确保float→half精度",
+    "opt_layer": "tiling",
+    "target_bottleneck": "Cube利用率不足(tile过小)"
+  },
+  "scene": {
+    "shape_signature": "M=[512-8192],K=[512-8192],N=[512-8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "matmul",
+      "cube",
+      "foundation"
+    ],
+    "task_tags": [
+      "ascendc",
+      "910b4",
+      "round1",
+      "tile-enlargement"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 5000
+  },
+  "chain": {
+    "session_id": "sess_20260616_2387",
+    "step_index": 0
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "ascend-kernel-kope",
+    "iteration": 0,
+    "dsl_before": "scalar MMAD baseline 1684ms",
+    "dsl_after": "MMAD 128x128x128 double buffer 0.33ms PASS",
+    "created_at": "2026-06-16T10:00:00Z"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260615_2841_0",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "n_tiling_baseline",
+    "title": "N-tiling Enables Large Row GELU: S4 0.60x PyTorch",
+    "description": "Added N-tiling with TILE_N_MAX=8192 to handle wide rows (S4: 29568 columns). UB buffer reduced from 346KB to 96KB per tile, fitting within 256KB limit. All 4 shapes pass with max diff 0.000122.",
+    "reason": "S4 (8192x29568) caused UB overflow (346KB > 256KB). N-tiling splits each row into 4 tiles of 8192 elements, making UB usage safe and enabling correct execution.",
+    "opt_layer": "tiling",
+    "target_bottleneck": "UB overflow for wide rows",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[1024x1024, 4096x3584, 4096x8192, 8192x29568]",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260615_2841",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "n_tiling_baseline"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T19:07:08Z"
+  }
+}

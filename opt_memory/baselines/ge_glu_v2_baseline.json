@@ -1,0 +1,1 @@
+{"operator": "ge_glu_v2", "results": {"S1": 0.778913, "S2": 5.964675}, "best_speedup": 1.0007189551719995, "best_round": "R02"}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gatherv2_sess_20260610_0002_1",
+  "kernel": {
+    "name": "gatherv2",
+    "category": "other",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "batch_no_effect",
+    "title": "Gather_v2批处理无效: 固定开销淹没所有优化",
+    "description": "多行批处理(8行/批)无效果: kernel时间0.19ms恒定, 固定开销~0.15ms淹没所有优化. 每行仍需独立GetValue+DataCopy(源行不连续), 批处理只减少TQue操作(每行仅省~1ns). 结论: pybind11+AscendC launch开销是硬限制",
+    "reason": "gather是纯数据搬运, 每行源地址随机不连续, 无法合并DataCopy输入. 批处理只减少输出端DataCopy(1次批量vs N次单独), 但输出DataCopy本身只占~0.01ms. 固定开销(~0.15ms)来自pybind11 validation+tiling alloc+CPU→NPU copy+kernel launch+AscendC runtime, 与kernel内部优化无关",
+    "opt_layer": "pipeline",
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "S2: src[65536,256]→4096indices",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_20260610_0002",
+    "step_index": 1,
+    "prev_thought_id": "",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "batch_no_effect"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-10T18:23:41Z"
+  }
+}

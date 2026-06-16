@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_swi_glu_sess_20260615_4d7f_1",
+  "kernel": {
+    "name": "swi_glu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "swiglu_chunk_256",
+    "title": "CHUNK 64→256: 大块向量化减少循环开销",
+    "description": "将 SWI_GLU_CHUNK 从 64 增加到 256，每个内循环处理 4 倍元素，减少循环开销并充分利用 Ascend 256 宽向量单元。",
+    "reason": "原始 CHUNK=64 导致向量操作未满宽度执行，循环开销占比大。增加到 256 匹配 Ascend 向量宽度。",
+    "opt_layer": "tiling",
+    "target_bottleneck": "向量宽度利用不足、循环开销",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[4096,37888] fp16",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 3.202
+  },
+  "chain": {
+    "session_id": "sess_20260615_4d7f",
+    "step_index": 1,
+    "prev_thought_id": "",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "swiglu_chunk_256"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T15:00:40Z"
+  }
+}

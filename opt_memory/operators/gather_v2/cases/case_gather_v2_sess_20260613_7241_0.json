@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gather_v2_sess_20260613_7241_0",
+  "kernel": {
+    "name": "gather_v2",
+    "category": "other",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/gather_v2/kernel/gather_v2_kernel.h"
+  },
+  "thought": {
+    "id": "vec_datacopy_gather",
+    "title": "标量逐元素→向量化 TQue DataCopy 行搬移",
+    "description": "将 ProcessRow 中逐元素的 GetValue/SetValue 标量循环替换为 TQue 向量化管线: VECIN DataCopy(GM→UB) → Adds(0) 恒等通过 → VECOUT DataCopy(UB→GM)。同时新增 dim tiling (TILE_DIM=256) 保证 UB 不溢出，并在 tiling 结构中添加 totalRows 字段正确计算源 buffer 尺寸。S2 (N=256) 实测加速比 12.6x",
+    "reason": "gather_v2 是纯数据搬运算子，标量逐元素循环在 N 增大时性能急剧恶化 (每元素 2 次 GM 事务)。向量化 DataCopy 将整行搬移合并为单次向量事务，彻底消除标量循环开销。TQue VECIN→VECOUT 是 AscendC 向量化数据搬运的标准范式",
+    "opt_layer": "instruction",
+    "target_bottleneck": "scalar memory access latency",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "X[8192..262144,128..512],indices[1024..8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "gather",
+      "index",
+      "data-movement",
+      "irregular-memory"
+    ],
+    "task_tags": [
+      "vectorization",
+      "TQue",
+      "DataCopy",
+      "gather"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 12.6
+  },
+  "chain": {
+    "session_id": "sess_gather_v2_20260613_7241",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "vec_datacopy_gather"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "Scalar GetValue/SetValue per-element loop over N (N up to 512)",
+    "dsl_after": "TQue VECIN→Adds(0)→VECOUT vectorized row copy with dim tiling TILE_DIM=256",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/gather_v2/",
+    "created_at": "2026-06-13T18:43:15Z"
+  }
+}

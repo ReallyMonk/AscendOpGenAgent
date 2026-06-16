@@ -1,0 +1,53 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260610_9895_3",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "double_row_batching",
+    "title": "双行批处理: S2性能+7%, TQue调用减半",
+    "description": "将逐行处理的 inner loop 改为每2行一批处理。N≤4096时 batchSize=2, N>4096时 batchSize=1(UB安全上限). 效果: S2(4096×3584) fp16从0.288ms降到0.267ms(+7.3%), bf16从0.278ms降到0.262ms(+5.8%). S3/S4因N>4096不回退单行, 无变化. S1受noise影响无显著变化.",
+    "reason": "逐行处理时每行需要AllocTensor→DataCopy→EnQue→DeQue→Compute→EnQue→DeQue→DataCopy→FreeTensor共9次TQue操作. 双行批处理将这些操作减半(2行共享), 节省了TQue管理开销和DataCopy调用次数. N>4096时回退单行是因为2*N*12会超出UB预算(256KB).",
+    "opt_layer": "pipeline",
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B*S=4096, H=3584] (S2: qwen2.5_7b)",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.07
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 3,
+    "prev_thought_id": "small_shape_overhead",
+    "prev_case_id": "case_gelu_sess_20260610_9895_2",
+    "full_sequence_hint": [
+      "baseline_001",
+      "n_tiling_large_rows",
+      "small_shape_overhead",
+      "double_row_batching"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 3,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-10T06:41:30Z"
+  }
+}

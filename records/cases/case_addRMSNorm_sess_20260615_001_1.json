@@ -1,0 +1,33 @@
+{
+  "case_id": "case_addRMSNorm_sess_20260615_001_1",
+  "kernel": {
+    "name": "add_rms_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound"
+  },
+  "thought": {
+    "id": "tbuf_reducesum_vectorize",
+    "title": "TBuf Direct Copy + ReduceSum Vectorization",
+    "description": "Replaced TQue (AllocTensor/EnQue/DeQue/FreeTensor per row) with TBuf+DataCopy for input/output. Added ReduceSum for vectorized sum-of-squares. Eliminated ~49K TQue calls for 4096 rows.",
+    "reason": "TQue per-row overhead dominates: each row requires 3× AllocTensor + 3× EnQue + 3× DeQue + 3× FreeTensor. TBuf+DataCopy eliminates all TQue overhead, and ReduceSum vectorizes the scalar reduction.",
+    "opt_layer": "tiling",
+    "target_bottleneck": "TQue per-row overhead → DataCopy latency"
+  },
+  "scene": {
+    "shape_signature": "M=4096, N=3584",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "step_improvement": 22.8
+  },
+  "chain": {
+    "session_id": "sess_add_rms_norm_20260615_a1b2",
+    "step_index": 1
+  },
+  "runtime": {
+    "device": "Ascend 910B4",
+    "agent": "kope"
+  }
+}

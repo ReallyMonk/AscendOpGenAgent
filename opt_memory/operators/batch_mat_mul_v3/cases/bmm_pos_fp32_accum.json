@@ -1,0 +1,10 @@
+{
+  "card_id": "bmm_pos_fp32_accum",
+  "type": "positive",
+  "title": "fp32 UB accumulation eliminates precision loss",
+  "category": "compute_optimization",
+  "technique": "TBuf<float> for partial sums, Cast back to fp16 on write-out",
+  "speedup_avg": 3.3054,
+  "lesson": "Accumulating partial dot products in fp32 inside UB, then casting to fp16 at write-out, maintains numerical precision while keeping memory bandwidth efficient. Direct fp16 accumulation would cause significant precision loss.",
+  "timestamp": "2026-06-10T01:29:05.186985"
+}

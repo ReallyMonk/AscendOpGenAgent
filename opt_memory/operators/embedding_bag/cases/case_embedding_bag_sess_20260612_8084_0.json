@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_embedding_bag_sess_20260612_8084_0",
+  "kernel": {
+    "name": "embedding_bag",
+    "category": "reduction",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "embedding_bag_baseline_scalar",
+    "title": "embedding_bag baseline: 标量实现",
+    "description": "CANNBench-lite baseline: 标量GetValue/SetValue逐元素累加embedding_bag，无N维tiling，无向量化",
+    "reason": "建立性能基线，识别随机gather访存+标量归约为核心瓶颈",
+    "opt_layer": "none",
+    "target_bottleneck": "随机访存+标量归约",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "V=10000,N=128,M=32",
+    "dtype": "float32",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_embedding_bag_20251216_8084",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "embedding_bag_baseline_scalar"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "ascend-kernel-kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-12T19:41:01Z"
+  }
+}

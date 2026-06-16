@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Bash(*)",
+      "Skill(*)",
+      "mcp__kope-mem__*",
+      "mcp__knowledge-cards__*",
+      "mcp__cannbench-lite__*",
+      "mcp__cannbench-lite__local_run_custom",
+      "mcp__session-stats__*",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "Bash(cd /home/hrl/AscendOpGenAgent/qoder_output/swi_glu && rm -rf kernel/build && cd kernel && bash build.sh 2>&1 | tail -3 && echo \"---\" && readelf -d build/_swi_glu_ext*.so | grep -E \"\\(RPATH|RUNPATH\\)\" && echo \"---\" && ldd build/_swi_glu_ext*.so 2>&1 | grep \"not found\")"
+    ]
+  }
+}

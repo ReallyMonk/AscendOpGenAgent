@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260611_4829_0",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "ub_safety_fix",
+    "title": "UB安全修复：单行处理+动态BlockM，避免TQue批量分配溢出",
+    "description": "发现多行批量处理时TQue::AllocTensor内部对齐导致UB溢出（\"ub address out of bounds\"）。回退到单行处理模式，TQue buffer仅分配1行大小，消除溢出风险。同时保留动态blockM优化（M≤4096→64，else→128）以改善小shape核心利用率。",
+    "reason": "多次尝试批量处理（batchSize 2-25）均在npu上崩溃，错误定位为UB地址越界。即使使用16B/element（+33%）安全余量和512B固定padding仍无法消除。根因分析：TQue::AllocTensor内部分配对buffer大小有额外元数据/对齐需求，导致实际分配略大于请求。单行处理时N*sizeof(T)远小于buffer容量，不会触发溢出。动态blockM来自历史验证有效优化（+4-10%）。",
+    "opt_layer": "pipeline",
+    "target_bottleneck": "kernel_launch_overhead",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B*S, H] with M∈[1024,8192], N∈[1024,29568]",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.05
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260611_4829",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "ub_safety_fix"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-11T19:38:50Z"
+  }
+}

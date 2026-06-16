@@ -1,0 +1,8 @@
+{
+  "card_id": "bmm_neg_tile_too_small",
+  "type": "negative",
+  "title": "Very small tiles (≤32) reduce DMA efficiency and increase overhead",
+  "category": "tiling_strategy",
+  "lesson": "Tiles smaller than 64 elements increase DMA transaction count and TQue EnQue/DeQue overhead. Each DMA has fixed overhead — larger tiles amortize this. However, tiles must fit within UB capacity (typically ~192KB).",
+  "timestamp": "2026-06-10T01:29:05.186999"
+}

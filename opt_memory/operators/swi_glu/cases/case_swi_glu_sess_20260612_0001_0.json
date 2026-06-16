@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_swi_glu_sess_20260612_0001_0",
+  "kernel": {
+    "name": "swi_glu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "fp16_direct_exp_silu_chunk256",
+    "title": "fp16 direct compute with Exp-based SiLU and larger chunk",
+    "description": "Replaced fp32 intermediate computation with fp16 direct compute. Eliminated 2 Cast ops per chunk (half→float and float→half). Used Exp-based SiLU: val/(1+exp(-val)) instead of tanh-based sigmoid approximation. Increased vector chunk size from 64 to 256 for better vector unit utilization. Workspace buffers now use half dtype instead of float, reducing memory footprint.",
+    "reason": "For memory-bound element-wise operators, data type conversions between fp16 and fp32 add significant overhead. Computing directly in fp16 eliminates this overhead. The Exp-based sigmoid uses 4 ops (Muls+Exp+Adds+Div) vs tanh-based 5 ops (Muls+Tanh+Adds+Muls+Mul). Larger chunk size (256 vs 64) improves vector unit utilization.",
+    "opt_layer": "instruction",
+    "target_bottleneck": "fp32 cast overhead in memory-bound element-wise kernel",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[M,2*inter] fp16, M=1-4096, inter=32-2048",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_swi_glu_20260612_0001",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "fp16_direct_exp_silu_chunk256"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B3",
+    "agent": "ascend-kernel-kope",
+    "iteration": 0,
+    "dsl_before": "Cast half→float. Tanh-based sigmoid: Muls(0.5)+Tanh+Adds(1)+Muls(0.5)+Mul+Mul. Chunk size 64. Cast float→half. Workspace buffers use float dtype.",
+    "dsl_after": "Fp16 direct compute. Exp-based SiLU: Muls(-1)+Exp+Adds(1)+Div+Mul. Chunk size 256. Eliminated Cast(half→float) and Cast(float→half). Workspace buffers use half dtype.",
+    "profiling_path": "",
+    "created_at": "2026-06-12T19:33:40Z"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_rms_norm_quant_sess_20260616_4821_0",
+  "kernel": {
+    "name": "add_rms_norm_quant",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "fp16_precision_adaptive_tiling",
+    "title": "fp16精度路径 + 自适应分块 + 单缓冲队列",
+    "description": "三项关键优化：(1) 在TQue LocalTensor上做in-place fp16 Add+Mul实现add+square，匹配PyTorch reference的fp16精度路径；(2) 用sqrt+1/x替代AscendC::Rsqrt，消除rsqrt硬件实现的精度差异；(3) 自适应BLOCK_M: M≤2048用128(8 cores), M>2048用256；(4) 单缓冲队列depth=1减少流水线同步开销。S1性能从19.87ms降至0.485ms(41x改善)，全部shape精度从97.66%提升至99.61%。",
+    "reason": "原kernel使用fp32全精度add+square与reference的fp16路径不匹配导致精度差异。Rsqrt硬件实现的1/sqrt(x)与reference的sqrt(x)后1/x路径在边界值处产生ULP差异。BLOCK_M=256在M=1024时仅产生4个block导致核心利用率极低(12.5%)。双缓冲队列在memory-bound算子中增加了不必要的流水线同步开销。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "fusion, reduction, memory_traffic",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024..4096], N=[3584..8192]",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.86
+  },
+  "chain": {
+    "session_id": "sess_add_rms_norm_quant_20250614_4821",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "fp16_precision_adaptive_tiling"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "fp32 add+square + AscendC::Rsqrt + BLOCK_M=256 fixed + depth-2 double-buffered queues",
+    "dsl_after": "fp16 add+square on TQue LocalTensor + sqrt+reciprocal scalar + adaptive BLOCK_M(128/256) + depth-1 single-buffered queues",
+    "profiling_path": "",
+    "created_at": "2026-06-16T08:29:04Z"
+  }
+}

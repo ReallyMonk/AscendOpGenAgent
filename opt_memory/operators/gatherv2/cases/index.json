@@ -1,0 +1,20 @@
+{
+  "case_gatherv2_sess_20260610_0001_0": {
+    "path": "case_gatherv2_sess_20260610_0001_0.json",
+    "thought_id": "vectorized_datacopy",
+    "thought_title": "Gather_v2向量化: 标量→DataCopy, S2加速12.6x",
+    "label": "effective",
+    "session_id": "sess_20260610_0001",
+    "step_index": 0,
+    "created_at": "2026-06-10T17:41:46Z"
+  },
+  "case_gatherv2_sess_20260610_0002_1": {
+    "path": "case_gatherv2_sess_20260610_0002_1.json",
+    "thought_id": "batch_no_effect",
+    "thought_title": "Gather_v2批处理无效: 固定开销淹没所有优化",
+    "label": "ineffective",
+    "session_id": "sess_20260610_0002",
+    "step_index": 1,
+    "created_at": "2026-06-10T18:23:41Z"
+  }
+}

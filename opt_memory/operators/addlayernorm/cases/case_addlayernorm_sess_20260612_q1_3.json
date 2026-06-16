@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_addlayernorm_sess_20260612_q1_3",
+  "kernel": {
+    "name": "addlayernorm",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "dynamic_blockm_doublebuf",
+    "title": "Dynamic blockM + Double Buffer Pipeline",
+    "description": "Dynamic blockM (64 for M<=4096, 128 for larger) + double-buffer input queues (depth=2). All shapes now beat or match PyTorch except S2(0.65x). S5 achieves 2.27x.",
+    "reason": "Better core utilization for small M. Double-buffer overlaps MTE copy with Vector compute.",
+    "opt_layer": "tiling",
+    "target_bottleneck": "core underutilization for small M",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,2048,4096,4096,8192], N=[512,1024,3584,8192,16384]",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.15
+  },
+  "chain": {
+    "session_id": "sess_addlayernorm_20260612_q1",
+    "step_index": 3,
+    "prev_thought_id": "",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "baseline",
+      "dynamic_blockm_doublebuf"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 3,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-12T10:50:37Z"
+  }
+}

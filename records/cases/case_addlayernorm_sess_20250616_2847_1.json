@@ -1,0 +1,33 @@
+{
+  "case_id": "case_addlayernorm_sess_20250616_2847_1",
+  "kernel": {
+    "name": "add_layer_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound"
+  },
+  "thought": {
+    "id": "reduce_sum_vectorization",
+    "title": "ReduceSum 向量化归约替代标量循环",
+    "description": "将 O(N) 标量循环归约替换为 AscendC ReduceSum 向量指令。使用独立 reduceResult buffer (256 floats) 作为 dst，从 computeBuf 预拷贝到 castBuf 作为 src，避免 dst==src 自别名破坏源数据。",
+    "reason": "标量循环在 AIV 上每元素需多次标量指令，O(N) 开销极大 (15.7ms for N=8192)。ReduceSum 利用向量硬件并行归约，性能提升 28x。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "reduction"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,4096], N=[3584,5120,8192]",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "effective",
+    "step_improvement": 22.9,
+    "confidence": 0.95
+  },
+  "chain": {
+    "session_id": "sess_add_layer_norm_20250616_2847",
+    "step_index": 1
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope"
+  }
+}

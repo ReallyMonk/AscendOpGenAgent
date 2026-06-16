@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_relu_sess_20250615_0001_0",
+  "kernel": {
+    "name": "relu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "relu_proven_template",
+    "title": "RELU 复用已验证 kernel 模板",
+    "description": "从 GELU kernel 派生的 RELU kernel：M-tiling自适应分块(blockM=32/64/128)、双 cast buffer 架构(fp16→f32→f32计算→fp16)、固定 32 核、每个核处理 tasksPerCore 行块。RELU 计算仅需单条 AscendC::Relu 指令。",
+    "reason": "GELU kernel 架构已验证稳定，RELU 作为更简单的 element-wise 算子可直接复用相同架构",
+    "opt_layer": "core_partition",
+    "target_bottleneck": "elementwise",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=1024-8192, N=1024-8192, fp16/bf16",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_relu_20250615_0001",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "relu_proven_template"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T19:11:56Z"
+  }
+}

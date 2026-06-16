@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_relu_sess_20260613_4721_0",
+  "kernel": {
+    "name": "relu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "fp16-direct-compute-elementwise",
+    "title": "消除 fp16/bf16 Cast 中间转换，直接使用原生类型计算 ReLU",
+    "description": "Baseline 对 fp16/bf16 输入先 Cast 到 fp32 执行 Relu 再 Cast 回。优化版直接在原始类型上调用 AscendC::Relu，消除 2 次向量 Cast + 2 次 PipeBarrier per row。同时增加 rowFactor 批量处理（小 N 时 8 行一批），提升 GM 带宽利用率。",
+    "reason": "ReLU 是纯 memory-bound 算子，Cast 转换增加不必要的内存操作。AscendC::Relu 原生支持 fp16/bf16，直接计算可减少 ~2x 的 vector 操作。rowFactor 批量处理进一步减少 GM 访问次数。",
+    "opt_layer": "tiling",
+    "target_bottleneck": "GM 带宽 + Cast 转换开销",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,4096,8192], N=[1024,3584,8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "2D",
+      "activation",
+      "elementwise",
+      "relu",
+      "fp16"
+    ],
+    "task_tags": [
+      "memory-bound",
+      "cast-elimination",
+      "row-batching"
+    ]
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 1.02
+  },
+  "chain": {
+    "session_id": "sess_relu_20260613_4721",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "fp16-direct-compute-elementwise"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-13T18:34:10Z"
+  }
+}

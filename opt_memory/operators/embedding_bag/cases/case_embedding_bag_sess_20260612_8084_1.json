@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_embedding_bag_sess_20260612_8084_1",
+  "kernel": {
+    "name": "embedding_bag",
+    "category": "reduction",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "embedding_bag_n_tiling_vectorize",
+    "title": "embedding_bag N-tiling + 向量化归约",
+    "description": "N-tiling(128) + 向量化DataCopy/Add/Muls/Cast: 标量GetValue/SetValue替换为向量操作，TILE_N=128分块处理，TBuf双缓冲",
+    "reason": "消除逐元素标量归约，向量化累加+Muls归一化，N-tiling避免大N时UB溢出",
+    "opt_layer": "tiling",
+    "target_bottleneck": "标量归约循环",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "V=10000,N=128,M=32",
+    "dtype": "float32",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 1.78
+  },
+  "chain": {
+    "session_id": "sess_embedding_bag_20251216_8084",
+    "step_index": 1,
+    "prev_thought_id": "embedding_bag_baseline_scalar",
+    "prev_case_id": "case_embedding_bag_sess_20260612_8084_0",
+    "full_sequence_hint": [
+      "embedding_bag_baseline_scalar",
+      "embedding_bag_n_tiling_vectorize"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "ascend-kernel-kope",
+    "iteration": 1,
+    "dsl_before": "for(j=0;j<N;++j){ float sum=0; for(i=start;i<end;++i) sum+=w[idx[i]*N+j]; y[bag*N+j]=sum*inv; }",
+    "dsl_after": "for(col=0;col<N;col+=TILE_N){ DataCopy(buf,w[id*N+col],count); Add(acc,acc,buf,count); Muls(acc,acc,inv,count); DataCopy(y[bag*N+col],acc,count); }",
+    "profiling_path": "",
+    "created_at": "2026-06-12T19:41:01Z"
+  }
+}

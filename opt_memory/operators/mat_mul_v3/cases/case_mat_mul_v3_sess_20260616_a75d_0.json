@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_mat_mul_v3_sess_20260616_a75d_0",
+  "kernel": {
+    "name": "mat_mul_v3",
+    "category": "matmul",
+    "compute_type": "compute_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output_foundation/mat_mul_v3/kernel/"
+  },
+  "thought": {
+    "id": "mm_mmad_init",
+    "title": "单矩阵乘MMAD 128x128x128 tile初始实现",
+    "description": "使用MatmulKernelRef<T,T,half,float>实现GEMM的MMAD计算。128x128x128 tile匹配910B4 Cube单元，L1_PREFETCH=2双缓冲隐藏延迟，Fixpipe quantPre=F322F16实现float→half量化，GetPhyAddr+SetGlobalBuffer确保Fixpipe stride写入不越界。输出buffer分配额外blockM安全行。支持fp16，覆盖5种shape从小方形到压力测试。",
+    "reason": "MMAD 128x128x128 tile是910B4 Cube单元的最大规格，可充分利用单次Cube运算的算力。双缓冲和Fixpipe float→half量化是正确性和性能的关键：未设置F322F16会导致输出全零或错值，未使用GetPhyAddr会导致DDR越界crash。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "cube_underutil + pipeline (较大shape时利用率18.4%)",
+    "apply_scenario": "performance",
+    "apply_stage": "design"
+  },
+  "scene": {
+    "shape_signature": "M=512~8192, K=512~8192, N=256~29568",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "gemm",
+      "multi_shape",
+      "benchmark"
+    ],
+    "task_tags": [
+      "MMAD",
+      "double_buffer",
+      "fixpipe_safety",
+      "F322F16"
+    ]
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 0.26
+  },
+  "chain": {
+    "session_id": "sess_mmad_matmul_20260616_a75d",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "mm_mmad_init"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "// Baseline为基础AscendC kernel或PyTorch matmul",
+    "dsl_after": "// MatmulKernelRef<T,T,half,float> with 128x128x128 tile, L1_PREFETCH=2, Fixpipe F322F16, GetPhyAddr safety",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output_foundation/mat_mul_v3/opt_results.json",
+    "created_at": "2026-06-16T10:19:16Z"
+  }
+}

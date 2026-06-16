@@ -1,0 +1,472 @@
+{
+  "add_layer_norm": [
+    {
+      "date": "2026-06-06",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-11",
+      "tflops": 9.8,
+      "utilization": 35.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 12.5,
+      "utilization": 45.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 0.006,
+      "utilization": 0.1,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.51,
+      "utilization": 0.64,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.015,
+      "utilization": 0.05,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.42,
+      "utilization": 0.66,
+      "source": "manual"
+    }
+  ],
+  "gelu": [
+    {
+      "date": "2026-06-10",
+      "tflops": 0.0,
+      "utilization": 38.2,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-10",
+      "tflops": 0.9356,
+      "utilization": 93.6,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-11",
+      "tflops": 1.04,
+      "utilization": 31.5,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 0.224,
+      "utilization": 0.07,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-14",
+      "tflops": 0.567,
+      "utilization": 56.7,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.224,
+      "utilization": 22.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.003,
+      "utilization": 0.03,
+      "source": "manual"
+    }
+  ],
+  "gather_v2": [
+    {
+      "date": "2026-06-10",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-14",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-14",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.0003,
+      "utilization": 0.0001,
+      "source": "manual"
+    }
+  ],
+  "rms_norm": [
+    {
+      "date": "2026-06-12",
+      "tflops": 38.0,
+      "utilization": 85.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.005,
+      "utilization": 0.0015,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.0,
+      "utilization": 3.0,
+      "source": "manual"
+    }
+  ],
+  "add_rms_norm": [
+    {
+      "date": "2026-06-12",
+      "tflops": 32.0,
+      "utilization": 75.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 0.42,
+      "utilization": 28.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.0085,
+      "utilization": 0.027,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.338,
+      "utilization": 1.09,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.343,
+      "utilization": 1.11,
+      "source": "manual"
+    }
+  ],
+  "layer_norm_v3": [
+    {
+      "date": "2026-06-12",
+      "tflops": 8.5,
+      "utilization": 15.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.004,
+      "utilization": 0.0012,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.0,
+      "utilization": 3.0,
+      "source": "manual"
+    }
+  ],
+  "relu": [
+    {
+      "date": "2026-06-12",
+      "tflops": 12.0,
+      "utilization": 25.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 0.32,
+      "utilization": 25.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.133,
+      "utilization": 0.042,
+      "source": "manual"
+    }
+  ],
+  "add_rms_norm_quant": [
+    {
+      "date": "2026-06-12",
+      "tflops": 5.2,
+      "utilization": 12.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 5.2,
+      "utilization": 12.0,
+      "source": "manual"
+    }
+  ],
+  "add_rms_norm_dynamic_quant": [
+    {
+      "date": "2026-06-12",
+      "tflops": 5.8,
+      "utilization": 14.0,
+      "source": "manual"
+    }
+  ],
+  "masked_softmax_with_rel_pos_bias": [
+    {
+      "date": "2026-06-12",
+      "tflops": 15.0,
+      "utilization": 40.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-14",
+      "tflops": 0.01,
+      "utilization": 0.003,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    }
+  ],
+  "scaled_masked_softmax_v2": [
+    {
+      "date": "2026-06-12",
+      "tflops": 12.0,
+      "utilization": 35.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    }
+  ],
+  "clipped_swiglu": [
+    {
+      "date": "2026-06-12",
+      "tflops": 0.377,
+      "utilization": 29.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-14",
+      "tflops": 0.24,
+      "utilization": 19.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.48,
+      "utilization": 30.0,
+      "source": "manual"
+    }
+  ],
+  "swi_glu": [
+    {
+      "date": "2026-06-12",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-14",
+      "tflops": 0.25,
+      "utilization": 2.5,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.247,
+      "utilization": 20.5,
+      "source": "manual"
+    }
+  ],
+  "embedding_bag": [
+    {
+      "date": "2026-06-12",
+      "tflops": 1.8,
+      "utilization": 38.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-12",
+      "tflops": 3.2,
+      "utilization": 62.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.0001,
+      "utilization": 3e-05,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.0,
+      "utilization": 30.0,
+      "source": "manual"
+    }
+  ],
+  "conv2d_v2": [
+    {
+      "date": "2026-06-13",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.0,
+      "utilization": 0.1,
+      "source": "manual"
+    }
+  ],
+  "avg_pool2d": [
+    {
+      "date": "2026-06-13",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.001,
+      "utilization": 0.0003,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.005,
+      "utilization": 0.0015,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    }
+  ],
+  "avgpool2d": [
+    {
+      "date": "2026-06-13",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-13",
+      "tflops": 0.0,
+      "utilization": 0.0,
+      "source": "manual"
+    }
+  ],
+  "cross_entropy_loss": [
+    {
+      "date": "2026-06-15",
+      "tflops": 0.117,
+      "utilization": 0.037,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-15",
+      "tflops": 0.327,
+      "utilization": 0.1,
+      "source": "manual"
+    }
+  ],
+  "gelu_mul": [
+    {
+      "date": "2026-06-15",
+      "tflops": 0.42,
+      "utilization": 35.0,
+      "source": "manual"
+    }
+  ],
+  "ge_glu_v2": [
+    {
+      "date": "2026-06-15",
+      "tflops": 0.456,
+      "utilization": 0.71,
+      "source": "manual"
+    }
+  ],
+  "mat_mul_v3": [
+    {
+      "date": "2026-06-16",
+      "tflops": 0.0,
+      "utilization": 0.01,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 0.145,
+      "utilization": 0.05,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 2.4,
+      "utilization": 0.94,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 47.0,
+      "utilization": 18.4,
+      "source": "manual"
+    }
+  ],
+  "batch_mat_mul_v3": [
+    {
+      "date": "2026-06-16",
+      "tflops": 0.0,
+      "utilization": 0.1,
+      "source": "manual"
+    },
+    {
+      "date": "2026-06-16",
+      "tflops": 17.7,
+      "utilization": 6.9,
+      "source": "manual"
+    }
+  ]
+}

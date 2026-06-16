@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_rms_norm_sess_20260613_8742_0",
+  "kernel": {
+    "name": "add_rms_norm",
+    "category": "normalization",
+    "compute_type": "compute_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/add_rms_norm/kernel/add_rms_norm_kernel.h"
+  },
+  "thought": {
+    "id": "reduce_sum_vectorization_v1",
+    "title": "ReduceSum 替代标量累加循环 + block_M 调优",
+    "description": "将逐元素标量累加循环 for(i=0;i<N;i++) sumSq+=v*v 替换为 AscendC::ReduceSum<float>(dst, src, tmp, N) 硬件矢量归约。O(N) 标量循环变为 O(log N) 硬件归约，同时 block_M 从 128 调整为 64 提升小 M 并行度。",
+    "reason": "对标 add_layer_norm 历史优化经验，标量循环在 Vector 处理器上 O(N) 开销极大，ReduceSum 利用硬件矢量归约单元。pattern reduce-sum-replace-scalar-loop 直接适用。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "标量累加循环O(N)在Vector处理器上串行执行",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024..4096], N=3584",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "bf16",
+      "ReduceSum",
+      "vectorization"
+    ],
+    "task_tags": [
+      "rms_norm",
+      "reduce",
+      "vectorization"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 1.86
+  },
+  "chain": {
+    "session_id": "sess_add_rms_norm_20250121_8742",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "reduce_sum_vectorization_v1"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "float sumSq = 0.0f; for (int32_t i = 0; i < t_.N; ++i) { float v = addFp32(i); sumSq += v * v; } float invRms = 1.0f / sqrt(sumSq * t_.invN + t_.eps); AscendC::Muls(addFp32, addFp32, invRms, t_.N);",
+    "dsl_after": "AscendC::ReduceSum<float>(reduceOut, xFp32, reduceTmp, t_.N); float sumSq = reduceOut.GetValue(0); float invRms = 1.0f / sqrt(sumSq * t_.invN + t_.eps); AscendC::Muls(compFp32, compFp32, invRms, t_.N);",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/add_rms_norm/perf_data.json",
+    "created_at": "2026-06-13T18:33:26Z"
+  }
+}

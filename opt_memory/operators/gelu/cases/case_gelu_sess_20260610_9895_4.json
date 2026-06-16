@@ -1,0 +1,54 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260610_9895_4",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "dynamic_blockm",
+    "title": "动态BlockM: S2额外+4%, 总提升达10%",
+    "description": "根据M动态选择blockM: M≤1024→64, M≤4096→64, else→128. 效果: S2 fp16从0.267ms再降到0.259ms(+4%), 总提升从7%累积到10%. S1因launch开销主导无显著变化.",
+    "reason": "原始blockM=128导致M=4096时只有32 blocks刚好用满核心. blockM=64得到64 blocks, 每个核心2 tasks, 提高了负载均衡和cache利用率. 对M=1024, blockM=64→16 blocks, 相比32→利用率稍好但launch开销仍主导.",
+    "opt_layer": "tiling",
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[B*S=4096, H=3584] (S2: qwen2.5_7b)",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.04
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 4,
+    "prev_thought_id": "double_row_batching",
+    "prev_case_id": "case_gelu_sess_20260610_9895_3",
+    "full_sequence_hint": [
+      "baseline_001",
+      "n_tiling_large_rows",
+      "small_shape_overhead",
+      "double_row_batching",
+      "dynamic_blockm"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 4,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-10T06:41:36Z"
+  }
+}

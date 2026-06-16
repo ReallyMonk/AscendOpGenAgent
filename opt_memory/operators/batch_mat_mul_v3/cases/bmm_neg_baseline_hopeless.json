@@ -1,0 +1,8 @@
+{
+  "card_id": "bmm_neg_baseline_hopeless",
+  "type": "negative",
+  "title": "Scalar GlobalTensor access is pathologically slow for matmul",
+  "category": "architecture",
+  "lesson": "The baseline BMM kernel running on Ascend 910B4 with scalar GlobalTensor access is ~500-1000x slower than PyTorch's torch.matmul. Each element access goes through global memory with hundreds of cycles latency. Even a simple UB tiling with DMA can recover 3-4x of this gap. Full Cube-unit utilization would be needed for competitive performance.",
+  "timestamp": "2026-06-10T01:29:05.187002"
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_clipped_swiglu_sess_20260612_01_0",
+  "kernel": {
+    "name": "clipped_swiglu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "opt_fp16_direct",
+    "title": "fp16 direct compute with Exp-based SiLU and larger chunk size",
+    "description": "Replaced fp32 intermediate computation with fp16 direct compute. Eliminated 2 Cast operations per chunk (half->float32 and float32->half). Used Exp-based SiLU: val/(1+exp(-val)) instead of tanh-based sigmoid approximation. Increased vector chunk size from 64 to 256 for better vector unit utilization.",
+    "reason": "For memory-bound element-wise operators, data type conversions between fp16 and fp32 add significant overhead (2 vector ops per chunk). Computing directly in fp16 eliminates this overhead. The Exp-based sigmoid uses fewer operations than the tanh-based approximation (Muls+Exp+Adds+Div vs Muls+Tanh+Adds+Muls+Mul).",
+    "opt_layer": "instruction",
+    "target_bottleneck": "fp32 cast overhead in element-wise memory-bound kernel",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "[M,2*inter] fp16, M=1024-8192, inter=256-8192",
+    "dtype": "float16",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 1.24
+  },
+  "chain": {
+    "session_id": "sess_clipped_swiglu_20260612_01",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "opt_fp16_direct"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "// Baseline: fp32 Cast + tanh sigmoid\nCast(gate_f32, input_half, chunk);\nCast(val_f32, input_half, chunk);\n// sigmoid: 0.5*(1+tanh(x/2))\nMuls(x2Wk, x2Wk, 0.5f, chunk);\nTanh(x2Wk, x2Wk, chunk);\nAdds(x2Wk, x2Wk, 1.0f, chunk);\nMuls(x2Wk, x2Wk, 0.5f, chunk);\nMul(x2Wk, x2Orig, x2Wk, chunk);  // silu\nMins(x2Wk, x2Wk, 1.0f, chunk);   // clip\nMul(x1Wk, x1Wk, x2Wk, chunk);    // result\nCast(output_half, x1Wk, chunk);",
+    "dsl_after": "// Optimized: fp16 direct + Exp sigmoid\nAdds(gate, input[start], 0, chunk);      // copy (no cast)\nAdds(val, input[half+start], 0, chunk);  // copy (no cast)\nMuls(tmp, val, -1.0f, chunk);            // -val\nExp(tmp, tmp, chunk);                    // exp(-val)\nAdds(tmp, tmp, 1.0f, chunk);             // 1+exp(-val)\nDiv(val, val, tmp, chunk);               // silu = val/(1+exp(-val))\nMins(val, val, 1.0f, chunk);             // clip\nMul(gate, gate, val, chunk);             // result\nAdds(output[start], gate, 0, chunk);     // copy (no cast)",
+    "profiling_path": "",
+    "created_at": "2026-06-12T19:12:09Z"
+  }
+}

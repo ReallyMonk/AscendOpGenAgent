@@ -1,0 +1,1 @@
+{"operator": "scaled_masked_softmax_v2", "results": {"S1": 14.232713, "S2": 225.684626}, "best_speedup": 1.0005257956939757, "best_round": "R04"}

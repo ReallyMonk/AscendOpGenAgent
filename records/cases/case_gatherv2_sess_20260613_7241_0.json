@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gatherv2_sess_20260613_7241_0",
+  "kernel": {
+    "name": "gatherv2",
+    "category": "other",
+    "compute_type": "memory_bound",
+    "path": "TQue VECIN→Adds(0)→VECOUT TILE_DIM=256"
+  },
+  "thought": {
+    "id": "scalar-to-vectorized-data-movement",
+    "title": "gatherv2 Scalar-To-Vectorized-Data-Movement",
+    "description": "Replace scalar GetValue/SetValue per-element loop with TQue VECIN→Adds(0)→VECOUT vectorized row copy. Add dim tiling and totalRows field.",
+    "reason": "Baseline: per-element for(j=0;j<N;++j) yGM_.SetValue(ri*N+j, xGM_.GetValue(idx*N+j)) — 2*N GM transactions per row. Optimized: TQue AllocTensor→DataCopy(GM→UB)→EnQue→DeQue→Adds(0)→EnQue→DeQue→DataCopy(UB→GM)→FreeTensor — ceil(N/TILE_DIM)*2 vector transactions.",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "X[8192..262144,128..512],indices[1024..8192]",
+    "dtype": "float16",
+    "data_tags": "gather,index,data-movement",
+    "task_tags": "vectorization,TQue,DataCopy"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 12.35,
+    "metric_changes": {
+      "task_duration_us": {
+        "before": 2470,
+        "after": 200
+      }
+    }
+  },
+  "chain": {
+    "session_id": "sess_gatherv2_20260613_7241",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "Scalar GetValue/SetValue N-element loop",
+    "dsl_after": "TQue VECIN→Adds(0)→VECOUT TILE_DIM=256",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/gather_v2/",
+    "created_at": "2026-06-13T18:43:21Z"
+  }
+}

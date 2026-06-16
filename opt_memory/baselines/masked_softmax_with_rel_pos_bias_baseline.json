@@ -1,0 +1,1 @@
+{"operator": "masked_softmax_with_rel_pos_bias", "results": {"S1": 14.272969, "S2": 224.727373}, "best_speedup": 1.0004175945388596, "best_round": "R08"}

@@ -1,0 +1,83 @@
+{
+  "case_gelu_sess_20260610_9895_0": {
+    "path": "case_gelu_sess_20260610_9895_0.json",
+    "thought_id": "baseline_001",
+    "thought_title": "GELU Baseline: Proven AscendC Kernel (verbatim from original)",
+    "label": "effective",
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 0,
+    "created_at": "2026-06-10T06:07:32Z"
+  },
+  "case_gelu_sess_20260610_9895_1": {
+    "path": "case_gelu_sess_20260610_9895_1.json",
+    "thought_id": "n_tiling_large_rows",
+    "thought_title": "N-Tiling Enables Large Row Width: 2.9x Speedup at 29568",
+    "label": "effective",
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 1,
+    "created_at": "2026-06-10T06:12:57Z"
+  },
+  "case_gelu_sess_20260610_9895_2": {
+    "path": "case_gelu_sess_20260610_9895_2.json",
+    "thought_id": "small_shape_overhead",
+    "thought_title": "Small Shape Regression: Custom GELU Slower than PyTorch at 1024×1024",
+    "label": "ineffective",
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 2,
+    "created_at": "2026-06-10T06:13:04Z"
+  },
+  "case_gelu_sess_20260610_9895_3": {
+    "path": "case_gelu_sess_20260610_9895_3.json",
+    "thought_id": "double_row_batching",
+    "thought_title": "双行批处理: S2性能+7%, TQue调用减半",
+    "label": "effective",
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 3,
+    "created_at": "2026-06-10T06:41:30Z"
+  },
+  "case_gelu_sess_20260610_9895_4": {
+    "path": "case_gelu_sess_20260610_9895_4.json",
+    "thought_id": "dynamic_blockm",
+    "thought_title": "动态BlockM: S2额外+4%, 总提升达10%",
+    "label": "effective",
+    "session_id": "sess_gelu_20260610_9895",
+    "step_index": 4,
+    "created_at": "2026-06-10T06:41:36Z"
+  },
+  "case_gelu_sess_20260611_4829_0": {
+    "path": "case_gelu_sess_20260611_4829_0.json",
+    "thought_id": "ub_safety_fix",
+    "thought_title": "UB安全修复：单行处理+动态BlockM，避免TQue批量分配溢出",
+    "label": "partial",
+    "session_id": "sess_gelu_20260611_4829",
+    "step_index": 0,
+    "created_at": "2026-06-11T19:38:50Z"
+  },
+  "case_gelu_sess_20260613_01_0": {
+    "path": "case_gelu_sess_20260613_01_0.json",
+    "thought_id": "shape-adaptive-3path",
+    "thought_title": "Shape-Adaptive 3-Path GELU Kernel：N-tiling + 双行批处理 + 动态UB",
+    "label": "negative",
+    "session_id": "sess_gelu_20260613_01",
+    "step_index": 0,
+    "created_at": "2026-06-13T18:52:18Z"
+  },
+  "case_gelu_sess_20260614_01_0": {
+    "path": "case_gelu_sess_20260614_01_0.json",
+    "thought_id": "n_tiling_dynamic_blockm",
+    "thought_title": "GELU N-Tiling + 动态BlockM: 全shape正确, 大shape性能接近PyTorch基准",
+    "label": "partial",
+    "session_id": "sess_gelu_20260614_01",
+    "step_index": 0,
+    "created_at": "2026-06-14T15:02:15Z"
+  },
+  "case_gelu_sess_20260615_2841_0": {
+    "path": "case_gelu_sess_20260615_2841_0.json",
+    "thought_id": "n_tiling_baseline",
+    "thought_title": "N-tiling Enables Large Row GELU: S4 0.60x PyTorch",
+    "label": "effective",
+    "session_id": "sess_gelu_20260615_2841",
+    "step_index": 0,
+    "created_at": "2026-06-15T19:07:08Z"
+  }
+}

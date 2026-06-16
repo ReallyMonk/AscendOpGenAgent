@@ -1,0 +1,67 @@
+{
+  "op_name": "add_rms_norm",
+  "device": "Ascend 910B",
+  "generated_at": "2026-06-06T10:30:00",
+  "shapes": [
+    {
+      "shape_id": "s1",
+      "description": "M=128, N=128 (small)",
+      "pytorch_ms": 0.15,
+      "ascendc_before_ms": 0.45,
+      "ascendc_after_ms": 0.08
+    },
+    {
+      "shape_id": "s2",
+      "description": "M=512, N=512 (medium)",
+      "pytorch_ms": 0.62,
+      "ascendc_before_ms": 1.85,
+      "ascendc_after_ms": 0.32
+    },
+    {
+      "shape_id": "s3",
+      "description": "M=2048, N=2048 (large)",
+      "pytorch_ms": 2.45,
+      "ascendc_before_ms": 8.20,
+      "ascendc_after_ms": 1.05
+    },
+    {
+      "shape_id": "s4",
+      "description": "M=4096, N=4096 (xlarge)",
+      "pytorch_ms": 9.80,
+      "ascendc_before_ms": 33.50,
+      "ascendc_after_ms": 4.10
+    }
+  ],
+  "knowledge_cards": [
+    {
+      "card_id": "tiling_2d_v3",
+      "title": "2D 分块策略 v3",
+      "category": "tiling",
+      "application": "应用 64x64 二维分块, 提升 L2 命中率至 92%, 减少 GM 访问次数。"
+    },
+    {
+      "card_id": "vec_compute_f16",
+      "title": "fp16 向量化计算",
+      "category": "compute",
+      "application": "使用 AscendC Vec 计算单元处理半精度, 一次指令处理 128 个元素。"
+    },
+    {
+      "card_id": "double_buffer",
+      "title": "Double Buffer 流水",
+      "category": "scheduling",
+      "application": "开 2 个 buffer 交替使用, 隐藏 GM 加载延迟, 提升吞吐率。"
+    },
+    {
+      "card_id": "ub_align_32b",
+      "title": "32B 对齐搬运",
+      "category": "memory",
+      "application": "确保 UB 搬运时 32 字节对齐, 触发最高带宽传输模式。"
+    },
+    {
+      "card_id": "tile_fusion_rms",
+      "title": "RMSNorm 融合",
+      "category": "fusion",
+      "application": "将 add + rms_norm 融合为单 kernel, 消除中间 tensor 落 GM。"
+    }
+  ]
+}

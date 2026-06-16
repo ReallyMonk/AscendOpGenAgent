@@ -1,0 +1,54 @@
+{
+  "case_id": "case_gatherv2_sess_20260614_4521_00",
+  "kernel": {
+    "name": "gather_v2",
+    "category": "other",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/gather_v2/kernel/gather_v2_kernel.h"
+  },
+  "thought": {
+    "id": "tbuf_direct_datacopy_gather_v2",
+    "title": "TBuf 直接 DataCopy 替代 TQue 队列管线",
+    "description": "ProcessRow 从 TQue VECIN-Adds(0)-VECOUT (11 ops/tile) 改为 TBuf VECCALC + 直接 DataCopy + PipeBarrier (3 ops/tile)",
+    "reason": "纯数据搬运算子无需队列保序, TBuf+DataCopy 消除 Adds(0)/EnQue/DeQue 开销",
+    "opt_layer": "instruction",
+    "target_bottleneck": "queue overhead",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "X[8192..262144,128..512],indices[1024..8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "gather",
+      "index",
+      "data-movement"
+    ],
+    "task_tags": [
+      "TBuf",
+      "DataCopy",
+      "vectorization"
+    ]
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 1.04
+  },
+  "chain": {
+    "session_id": "sess_gather_v2_20260614_4521",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "TQue VECIN-Adds(0)-VECOUT",
+    "dsl_after": "TBuf DataCopy+PipeBarrier",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/gather_v2/",
+    "created_at": "2026-06-14T18:30:00Z"
+  }
+}

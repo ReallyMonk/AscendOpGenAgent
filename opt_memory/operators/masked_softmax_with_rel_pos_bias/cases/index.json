@@ -1,0 +1,20 @@
+{
+  "case_masked_softmax_with_rel_pos_bias_sess_20260614_a3f2_0": {
+    "path": "case_masked_softmax_with_rel_pos_bias_sess_20260614_a3f2_0.json",
+    "thought_id": "msrpb_fused_softmax_v1",
+    "thought_title": "Fused-input softmax with DataCopyPad for CANN 8.5.0",
+    "label": "ineffective",
+    "session_id": "sess_masked_softmax_with_rel_pos_bias_20250614_a3f2",
+    "step_index": 0,
+    "created_at": "2026-06-14T21:39:20Z"
+  },
+  "case_masked_softmax_with_rel_pos_bias_sess_20260615_0001_0": {
+    "path": "case_masked_softmax_with_rel_pos_bias_sess_20260615_0001_0.json",
+    "thought_id": "msrpb_baseline_align",
+    "thought_title": "Baseline-aligned masked softmax kernel with merge_n batching",
+    "label": "ineffective",
+    "session_id": "sess_masked_softmax_with_rel_pos_bias_20250615_0001",
+    "step_index": 0,
+    "created_at": "2026-06-15T16:14:20Z"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "kope-mem": {
+      "command": "python3.11",
+      "args": [
+        "-m",
+        "kope_mem.mcp_server"
+      ],
+      "env": {
+        "KOPE_MEM_WORKING_DIR": "/home/hrl/AscendOpGenAgent"
+      }
+    },
+    "knowledge-cards": {
+      "command": "python3.11",
+      "args": [
+        "-m",
+        "knowledge_card.knowledge_card_server"
+      ],
+      "env": {
+        "KNOWLEDGE_CARDS_DIR": "/home/hrl/AscendOpGenAgent/records"
+      }
+    },
+    "cannbench-lite": {
+      "command": "python3.11",
+      "args": [
+        "-m",
+        "cannbench.mcp_server"
+      ]
+    },
+    "session-stats": {
+      "command": "python3.11",
+      "args": [
+        "/home/hrl/AscendOpGenAgent/utils/session_stats_server.py"
+      ]
+    }
+  }
+}

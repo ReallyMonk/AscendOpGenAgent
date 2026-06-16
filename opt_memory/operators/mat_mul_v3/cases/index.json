@@ -1,0 +1,29 @@
+{
+  "case_mat_mul_v3_sess_20260616_7a3f_0": {
+    "path": "case_mat_mul_v3_sess_20260616_7a3f_0.json",
+    "thought_id": "ktile_python_split",
+    "thought_title": "Python端K-tile分割 + C++单K-tile内核 + Fixpipe多Block修复",
+    "label": "effective",
+    "session_id": "sess_mat_mul_v3_20260616_7a3f",
+    "step_index": 0,
+    "created_at": "2026-06-16T07:02:16Z"
+  },
+  "case_mat_mul_v3_sess_20260616_2387_0": {
+    "path": "case_mat_mul_v3_sess_20260616_2387_0.json",
+    "thought_id": "mmad_128_tile_double_buffer",
+    "thought_title": "128x128 MMAD tile + 双缓冲 + Fixpipe F322F16 量化",
+    "label": "effective",
+    "session_id": "sess_mat_mul_v3_20260616_2387",
+    "step_index": 0,
+    "created_at": "2026-06-16T09:59:04Z"
+  },
+  "case_mat_mul_v3_sess_20260616_a75d_0": {
+    "path": "case_mat_mul_v3_sess_20260616_a75d_0.json",
+    "thought_id": "mm_mmad_init",
+    "thought_title": "单矩阵乘MMAD 128x128x128 tile初始实现",
+    "label": "ineffective",
+    "session_id": "sess_mmad_matmul_20260616_a75d",
+    "step_index": 0,
+    "created_at": "2026-06-16T10:19:16Z"
+  }
+}

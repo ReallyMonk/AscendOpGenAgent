@@ -1,0 +1,54 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gelu_sess_20260614_01_0",
+  "kernel": {
+    "name": "gelu",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "Optimized: N-tiling(TILE_N=8192 for N>8192), dynamic-BlockM(64/128), KERNEL_TYPE_MIX_AIC_1_2"
+  },
+  "thought": {
+    "id": "unknown",
+    "title": "gelu Unknown",
+    "description": "",
+    "reason": "",
+    "opt_layer": "tiling",
+    "related_opt_layers": [],
+    "target_bottleneck": "unknown",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "(1024,1024)-(8192,29568)",
+    "dtype": "float16",
+    "data_tags": "qwen2.5,llm,activation",
+    "task_tags": "gelu,elementwise,n-tiling"
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.0,
+    "metric_changes": {
+      "task_duration_us": {}
+    }
+  },
+  "chain": {
+    "session_id": "sess_gelu_20260614_01",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": "baseline",
+    "full_sequence_hint": [
+      "step_0"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "Baseline: single-row, blockM=128 fixed, no N-tiling",
+    "dsl_after": "Optimized: N-tiling(TILE_N=8192 for N>8192), dynamic-BlockM(64/128), KERNEL_TYPE_MIX_AIC_1_2",
+    "profiling_path": "output/gelu/profiling_round_0.json",
+    "created_at": "2026-06-14T15:02:25Z"
+  }
+}

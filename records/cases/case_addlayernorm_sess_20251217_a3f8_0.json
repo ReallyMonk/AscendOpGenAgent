@@ -1,0 +1,56 @@
+{
+  "case_id": "case_addlayernorm_sess_20251217_a3f8_0",
+  "kernel": {
+    "name": "add_layer_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound"
+  },
+  "thought": {
+    "id": "reduce_sum_single_aiv",
+    "title": "ReduceSum矢量归约 + MIX_AIC_1_1单AIV + 精简TBuf",
+    "description": "将逐元素标量累加循环替换为AscendC::ReduceSum硬件矢量归约(O(N)→O(log N))。改用KERNEL_TYPE_MIX_AIC_1_1避免双AIV导致UB翻倍溢出(>256KB)。Direct block-to-row映射替代GetSubBlockIdx。TBuf从6个精简到3个(castBuf+castBuf2+computeBuf)。Gamma/beta per-row cast替代预加载fp32版本进一步节省UB。",
+    "reason": "标量循环O(N)在Vector处理器上串行执行成为主导瓶颈。历史pattern reduce-sum-replace-scalar-loop直接适用。MIX_AIC_1_2导致两个AIV各自分配UB buffer总量超256KB引发越界，改为MIX_AIC_1_1稳定。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "标量累加循环O(N)在Vector处理器串行执行 + UB双倍分配超256KB"
+  },
+  "scene": {
+    "shape_signature": "M=[1024..4096], N=[3584..8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "reduce_sum",
+      "vectorization",
+      "single_row",
+      "fp16"
+    ],
+    "task_tags": [
+      "normalization",
+      "fusion",
+      "add_layer_norm"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 2.36
+  },
+  "chain": {
+    "session_id": "sess_20251217_a3f8",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "reduce_sum_single_aiv"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "float sumVal=0.0f; for(int i=0;i<N;i++){sumVal+=addFp32(i);} + KERNEL_TYPE_MIX_AIC_1_2",
+    "dsl_after": "ReduceSum<float>(addFp32,addFp32,reduceWork,N); sumVal=addFp32(0); + KERNEL_TYPE_MIX_AIC_1_1",
+    "profiling_path": "",
+    "created_at": "2025-06-15T16:45:00Z",
+    "updated_at": "2026-06-15T16:47:45Z"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_batch_mat_mul_v3_sess_20260616_a75d_0",
+  "kernel": {
+    "name": "batch_mat_mul_v3",
+    "category": "matmul",
+    "compute_type": "compute_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output_foundation/batch_mat_mul_v3/kernel/"
+  },
+  "thought": {
+    "id": "bmm_mmad_init",
+    "title": "批次矩阵乘MMAD 128x128x128 tile初始实现",
+    "description": "使用MatmulKernelRef<half,half,half,float>实现批次矩阵乘的MMAD计算。核心设计：128x128x128 tile最大化Cube单元利用率，L1_PREFETCH=2双缓冲隐藏GM→L1延迟，Fixpipe F322F16量化实现float→half精度转换，GetPhyAddr+SetGlobalBuffer避免Fixpipe DDR越界。batch维度展开为2D [B*M, K]×[B*K, N]布局，每个batch内独立block partition。",
+    "reason": "批次矩阵乘是多个独立矩阵乘的集合，通过对batch维度展开为2D矩阵，可复用单矩阵乘的MMAD优化策略。128x128x128 tile匹配910B4 Cube单元规格，相比基础tile(16x16)实现512x吞吐提升。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "cube_underutil (小shape批次矩阵乘计算密度不足)",
+    "apply_scenario": "performance",
+    "apply_stage": "design"
+  },
+  "scene": {
+    "shape_signature": "B=8~32, M=128~512, K=128~256, N=128~512",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "batch_matmul",
+      "small_shape",
+      "benchmark"
+    ],
+    "task_tags": [
+      "MMAD",
+      "double_buffer",
+      "batch_aware_tiling",
+      "fixpipe_safety"
+    ]
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 0.31
+  },
+  "chain": {
+    "session_id": "sess_mmad_matmul_20260616_a75d",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "bmm_mmad_init"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "// 无MMAD实现 - baseline为PyTorch torch.bmm",
+    "dsl_after": "// BmmKernel<half> with MatmulKernelRef<half,half,half,float>, 128x128x128 tile, L1_PREFETCH=2, Fixpipe F322F16",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output_foundation/batch_mat_mul_v3/opt_results.json",
+    "created_at": "2026-06-16T10:19:00Z"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_conv2d_v2_sess_20250618_0001_0",
+  "kernel": {
+    "name": "conv2d_v2",
+    "category": "conv",
+    "compute_type": "compute_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/conv2d_v2/kernel"
+  },
+  "thought": {
+    "id": "conv2d_nhw_tiling",
+    "title": "conv2d N*H*Tiling 多核并行",
+    "description": "基于 CANNBench-lite conv2d_v2 baseline 创建 AscendC 实现。核心：按 N*Co*H 维度分块到 32 核，每核处理 blockM=128 行输出。",
+    "reason": "Conv2d 是 compute-bound 算子，多核并行是提升吞吐的关键。N*H 维度切分可以最大化并行度。",
+    "opt_layer": "core_partition",
+    "target_bottleneck": "compute_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "design"
+  },
+  "scene": {
+    "shape_signature": "N=[1,8] Ci=[64,512] Co=[128,1024] H=[7,112] W=[7,112]",
+    "dtype": "float16",
+    "data_tags": [
+      "conv2d",
+      "ascendc",
+      "kernel"
+    ],
+    "task_tags": [
+      "ascendc",
+      "baseline"
+    ]
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.8,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_conv2d_20250618_0001",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "conv2d_nhw_tiling"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "ascend-kernel-kope-lite",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-13T08:29:57Z"
+  }
+}

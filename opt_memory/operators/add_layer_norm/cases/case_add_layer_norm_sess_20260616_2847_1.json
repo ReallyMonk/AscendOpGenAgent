@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_layer_norm_sess_20260616_2847_1",
+  "kernel": {
+    "name": "add_layer_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "reduce_sum_vectorization",
+    "title": "ReduceSum 向量化归约替代标量循环",
+    "description": "将 O(N) 标量循环归约替换为 AscendC ReduceSum 向量指令。使用独立 reduceResult buffer (256 floats) 作为 dst，从 computeBuf 预拷贝到 castBuf 作为 src，避免 dst==src 自别名破坏源数据。",
+    "reason": "标量循环在 AIV 上每元素需多次标量指令，O(N) 开销极大 (15.7ms for N=8192)。ReduceSum 利用向量硬件并行归约，性能提升 28x (S4)。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "reduction",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,4096], N=[3584,5120,8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "fusion",
+      "residual",
+      "layernorm",
+      "transformer"
+    ],
+    "task_tags": [
+      "optimization",
+      "vectorization",
+      "reduction"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 22.9
+  },
+  "chain": {
+    "session_id": "sess_add_layer_norm_20250616_2847",
+    "step_index": 1,
+    "prev_thought_id": "",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "reduce_sum_vectorization"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 2,
+    "dsl_before": "scalar_loop: for(i=0;i<N;i++){float val=addFp32(i);sumVal+=val;sumSqVal+=val*val;}",
+    "dsl_after": "DataCopy(castFp32,computeFp32,N);ReduceSum(reduceResult,castFp32,reduceTmp,N)",
+    "profiling_path": "",
+    "created_at": "2026-06-16T10:42:13Z"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "card_id": "bmm_neg_release_useless",
+  "type": "negative",
+  "title": "Release build (-O2) gives <1% gain for memory-bound scalar kernels",
+  "category": "compiler_flags",
+  "lesson": "Switching Debug→Release without algorithmic change is ineffective. The bottleneck is global memory latency (~hundreds of cycles per access), not instruction scheduling. Fix the algorithm first, then tune compiler flags.",
+  "timestamp": "2026-06-10T01:29:05.186994"
+}

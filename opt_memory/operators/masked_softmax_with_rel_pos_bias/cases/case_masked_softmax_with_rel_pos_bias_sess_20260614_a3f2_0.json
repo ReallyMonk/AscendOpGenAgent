@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_masked_softmax_with_rel_pos_bias_sess_20260614_a3f2_0",
+  "kernel": {
+    "name": "masked_softmax_with_rel_pos_bias",
+    "category": "activation",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/masked_softmax_with_rel_pos_bias/kernel/msrpb_kernel.h"
+  },
+  "thought": {
+    "id": "msrpb_fused_softmax_v1",
+    "title": "Fused-input softmax with DataCopyPad for CANN 8.5.0",
+    "description": "Pre-fuse qk+bias and mask on Python side into single input with -inf for masked positions. Single VECIN/VECOUT AscendC kernel computes softmax via fp32 TBuf: Cast fp16→fp32, scalar max-find, Adds(-max), Exp, scalar sum, Muls(1/sum), Cast fp32→fp16. Uses DataCopyPad for GM↔UB transfers (plain DataCopy fails in CANN 8.5.0). Mask convention: mask==0→-inf (exp(-inf)=0).",
+    "reason": "Multi-VECIN-queue fails CANN 8.5.0 TQue depth assertion. Pre-fusion enables single-queue design. DataCopyPad is required for correct GM↔UB transfer in this CANN version. RMS-norm kernel pattern (1 VECIN, 1 VECOUT, TBuf) proven reliable.",
+    "opt_layer": "pipeline",
+    "target_bottleneck": "Scalar loops on TBuf limit throughput; single-row processing with no vectorization",
+    "apply_scenario": "both",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "B=4,N=32,S1=1024,S2=1024 M=131072,N=1024",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "softmax",
+      "masked",
+      "attention"
+    ],
+    "task_tags": [
+      "ascendc",
+      "kernel",
+      "optimization"
+    ]
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 0.01
+  },
+  "chain": {
+    "session_id": "sess_masked_softmax_with_rel_pos_bias_20250614_a3f2",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "msrpb_fused_softmax_v1"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "No working kernel - all attempts crashed with 507057 or produced zeros",
+    "dsl_after": "1 VECIN queue (depth=1) + 1 VECOUT queue + 1 TBuf fp32. DataCopyPad for GM↔UB. Softmax: Cast→Adds(max)→Exp→Muls(1/sum)→Cast.",
+    "profiling_path": "",
+    "created_at": "2026-06-14T21:39:20Z"
+  }
+}

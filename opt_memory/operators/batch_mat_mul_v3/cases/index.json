@@ -1,0 +1,11 @@
+{
+  "case_batch_mat_mul_v3_sess_20260616_a75d_0": {
+    "path": "case_batch_mat_mul_v3_sess_20260616_a75d_0.json",
+    "thought_id": "bmm_mmad_init",
+    "thought_title": "批次矩阵乘MMAD 128x128x128 tile初始实现",
+    "label": "ineffective",
+    "session_id": "sess_mmad_matmul_20260616_a75d",
+    "step_index": 0,
+    "created_at": "2026-06-16T10:19:00Z"
+  }
+}

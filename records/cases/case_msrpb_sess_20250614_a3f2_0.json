@@ -1,0 +1,33 @@
+{
+  "case_id": "case_msrpb_sess_20250614_a3f2_0",
+  "kernel": {
+    "name": "masked_softmax_with_rel_pos_bias",
+    "category": "activation",
+    "compute_type": "memory_bound"
+  },
+  "thought": {
+    "id": "msrpb_fused_softmax_v1",
+    "title": "Fused-input softmax with DataCopyPad for CANN 8.5.0",
+    "description": "Pre-fuse qk+bias+mask on Python side into single input with -inf for masked positions. Single VECIN/VECOUT AscendC kernel computes softmax via fp32 TBuf: Cast fp16→fp32, scalar max-find, Adds(-max), Exp, scalar sum, Muls(1/sum), Cast fp32→fp16. Uses DataCopyPad for GM↔UB transfers.",
+    "reason": "Multi-VECIN-queue fails CANN 8.5.0 TQue depth assertion. Pre-fusion enables single-queue design. DataCopyPad required for correct GM↔UB transfer.",
+    "opt_layer": "pipeline",
+    "target_bottleneck": "Scalar loops on TBuf limit throughput; single-row processing with no vectorization"
+  },
+  "scene": {
+    "shape_signature": "B=4,N=32,S1=1024,S2=1024 M=131072,N=1024",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.9,
+    "step_improvement": 0.01
+  },
+  "chain": {
+    "session_id": "sess_msrpb_20250614_a3f2",
+    "step_index": 0
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope"
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "experiment_name": "exp_2026_06_06_litebench",
+  "generated_at": "2026-06-06T14:23:00+08:00",
+  "global_meta": {
+    "device": "Ascend 910B",
+    "npu_model": "Ascend 910B",
+    "cann_version": "CANN 8.0.RC2",
+    "soc_version": "Ascend910B1",
+    "driver_version": "24.1.rc2",
+    "npu_memory_gb": 64,
+    "torch_version": "2.1.0",
+    "torch_npu_version": "2.1.0.post6"
+  },
+  "operators": [
+    {
+      "op_name": "add_rms_norm",
+      "shapes": [
+        {
+          "shape_id": "s1_small",
+          "description": "M=128, N=128 (small)",
+          "pytorch_ms": 0.152,
+          "ascendc_before_ms": 0.487,
+          "ascendc_after_ms": 0.082
+        },
+        {
+          "shape_id": "s2_medium",
+          "description": "M=512, N=512 (medium)",
+          "pytorch_ms": 0.621,
+          "ascendc_before_ms": 1.842,
+          "ascendc_after_ms": 0.286
+        },
+        {
+          "shape_id": "s3_large",
+          "description": "M=2048, N=2048 (large)",
+          "pytorch_ms": 3.148,
+          "ascendc_before_ms": 9.327,
+          "ascendc_after_ms": 1.243
+        },
+        {
+          "shape_id": "s4_xlarge",
+          "description": "M=4096, N=4096 (xlarge)",
+          "pytorch_ms": 12.564,
+          "ascendc_before_ms": 38.215,
+          "ascendc_after_ms": 4.681
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "card_id": "tiling_2d_v3",
+          "title": "2D 分块策略 v3",
+          "category": "tiling",
+          "application": "按 (M, N) 维度 64x64 分块, 提升 L2 命中率至 87%"
+        },
+        {
+          "card_id": "vec_compute_f16",
+          "title": "f16 向量化计算",
+          "category": "compute",
+          "application": "在 M/N 维度开启 SIMD 向量, 算子内计算吞吐量 +60%"
+        },
+        {
+          "card_id": "double_buffer",
+          "title": "双缓冲流水线",
+          "category": "scheduling",
+          "application": "Compute / DataMove 并行, 隐藏 GM 搬运延迟"
+        },
+        {
+          "card_id": "tile_fusion_rms",
+          "title": "RMS 算子融合",
+          "category": "fusion",
+          "application": "在 tiling 粒度上把 add + rms_norm 一次完成, 减少一次 GM 读写"
+        }
+      ]
+    },
+    {
+      "op_name": "layer_norm",
+      "shapes": [
+        {
+          "shape_id": "s1",
+          "description": "M=256, N=768 (BERT-base)",
+          "pytorch_ms": 0.087,
+          "ascendc_before_ms": 0.214,
+          "ascendc_after_ms": 0.041
+        },
+        {
+          "shape_id": "s2",
+          "description": "M=1024, N=1024",
+          "pytorch_ms": 0.331,
+          "ascendc_before_ms": 0.892,
+          "ascendc_after_ms": 0.143
+        },
+        {
+          "shape_id": "s3",
+          "description": "M=4096, N=4096",
+          "pytorch_ms": 5.214,
+          "ascendc_before_ms": 14.612,
+          "ascendc_after_ms": 1.812
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "card_id": "ub_align_32b",
+          "title": "32B UB 对齐",
+          "category": "memory",
+          "application": "对 N 维按 8 元素对齐(32B), 避免 vector 跨步访存"
+        },
+        {
+          "card_id": "welford_fusion",
+          "title": "Welford 融合均值方差",
+          "category": "compute",
+          "application": "在单次遍历中同时累计 mean 和 var, 减少一次扫描"
+        }
+      ]
+    },
+    {
+      "op_name": "softmax",
+      "shapes": [
+        {
+          "shape_id": "s1",
+          "description": "M=128, N=1024 (small batch)",
+          "pytorch_ms": 0.052,
+          "ascendc_before_ms": 0.184,
+          "ascendc_after_ms": 0.038
+        },
+        {
+          "shape_id": "s2",
+          "description": "M=512, N=8192",
+          "pytorch_ms": 0.987,
+          "ascendc_before_ms": 3.421,
+          "ascendc_after_ms": 0.612
+        },
+        {
+          "shape_id": "s3",
+          "description": "M=2048, N=32768",
+          "pytorch_ms": 12.482,
+          "ascendc_before_ms": 41.238,
+          "ascendc_after_ms": 7.041
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "card_id": "online_softmax",
+          "title": "Online Softmax",
+          "category": "compute",
+          "application": "采用 online 算法, 单次遍历同时更新 max 和 sum exp, 减少 GM 读写"
+        },
+        {
+          "card_id": "vec_exp_approx",
+          "title": "Vector exp 近似",
+          "category": "compute",
+          "application": "使用近似 exp(8 元素 vector), 误差 <1e-5 但速度 +40%"
+        }
+      ]
+    }
+  ],
+  "knowledge_cards": [
+    {
+      "card_id": "ascend910b_best_practice",
+      "title": "Ascend 910B 最佳实践汇总",
+      "category": "scheduling",
+      "application": "本次实验所有算子均严格遵守: 双缓冲 + UB 对齐 + 2D 分块"
+    }
+  ]
+}

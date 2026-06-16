@@ -1,0 +1,53 @@
+{
+  "case_id": "case_addlayernorm_sess_20260613_0001_0",
+  "kernel": {
+    "name": "add_layer_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound"
+  },
+  "thought": {
+    "id": "reduce-ub-buffers",
+    "title": "减少UB缓冲区并简化块映射修复UB越界崩溃",
+    "description": "将kernel从6个TBuf减少到2个(castBuf+computeBuf)，移除GetSubBlockNum子块映射改用直接block-to-row映射，消除gamma/beta预加载，为每个V单元操作后添加PipeBarrier",
+    "reason": "原始kernel在Init中分配过多TBuf导致UB超出256KB限制，GetSubBlockNum导致错误行索引，buffer aliasing导致数据竞争",
+    "opt_layer": "tiling",
+    "category": "memory"
+  },
+  "scene": {
+    "shape_signature": "M=1024-4096,N=3584-8192",
+    "dtype": "float16",
+    "data_tags": [
+      "fp16",
+      "normalization",
+      "layer_norm",
+      "add"
+    ],
+    "task_tags": [
+      "ub-optimization",
+      "correctness-fix",
+      "buffer-reduction"
+    ]
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "step_improvement": 1,
+    "thought_match": "high",
+    "apply_scenario": "correctness",
+    "apply_stage": "translation"
+  },
+  "chain": {
+    "session_id": "sess_20260613_0001",
+    "step_index": 0,
+    "iteration": 0,
+    "operator": "add_layer_norm",
+    "device": "Ascend910B4",
+    "agent": "kope"
+  },
+  "runtime": {
+    "dsl_before": "6 TBuf + GetSubBlockNum + preloaded gamma/beta",
+    "dsl_after": "2 TBuf + direct block mapping + sequential cast",
+    "profiling_path": "/home/hrl/AscendOpGenAgent/qoder_output/add_layer_norm/perf_data.json",
+    "kernel_path": "/home/hrl/AscendOpGenAgent/qoder_output/add_layer_norm/kernel/add_layer_norm_kernel.h"
+  }
+}

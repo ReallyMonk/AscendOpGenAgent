@@ -1,0 +1,1 @@
+{"operator": "clipped_swiglu", "results": {"S1": 0.689009, "S2": 5.129994}, "best_speedup": 1.0013590255123401, "best_round": "R08"}

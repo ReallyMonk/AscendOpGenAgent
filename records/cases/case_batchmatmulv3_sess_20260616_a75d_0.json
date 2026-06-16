@@ -1,0 +1,34 @@
+{
+  "case_id": "case_batchmatmulv3_sess_20260616_a75d_0",
+  "kernel": {
+    "name": "batch_mat_mul_v3",
+    "category": "matmul",
+    "compute_type": "compute_bound"
+  },
+  "thought": {
+    "id": "bmm_mmad_init",
+    "title": "批次矩阵乘MMAD 128x128x128 tile初始实现",
+    "description": "使用MatmulKernelRef实现批次矩阵乘的MMAD计算。128x128x128 tile匹配Cube单元，L1_PREFETCH=2双缓冲隐藏GM→L1延迟，Fixpipe F322F16量化实现float→half精度转换，GetPhyAddr+SetGlobalBuffer避免Fixpipe stride写入DDR越界。batch维度展开为2D [B*M,K]×[B*K,N]布局，batch内独立block partition。",
+    "reason": "批次矩阵乘是多个独立矩阵乘的集合，通过batch维度展开为2D矩阵可复用单矩阵乘MMAD优化。128x128x128 tile匹配910B4 Cube单元规格，相比基础tile实现512x吞吐提升。双缓冲和Fixpipe量化是正确性的关键依赖。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "cube_underutil"
+  },
+  "scene": {
+    "shape_signature": "B=8~32, M=128~512, K=128~256, N=128~512",
+    "dtype": "float16"
+  },
+  "effect": {
+    "label": "ineffective",
+    "step_improvement": 0.31,
+    "confidence": 0.85
+  },
+  "chain": {
+    "session_id": "sess_mmad_matmul_20260616_a75d",
+    "step_index": 0
+  },
+  "runtime": {
+    "device": "Ascend910B4",
+    "agent": "kope",
+    "created_at": "2026-06-16T10:16:00"
+  }
+}

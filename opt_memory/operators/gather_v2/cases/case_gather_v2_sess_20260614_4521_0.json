@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_gather_v2_sess_20260614_4521_0",
+  "kernel": {
+    "name": "gather_v2",
+    "category": "other",
+    "compute_type": "memory_bound",
+    "path": "/home/hrl/AscendOpGenAgent/qoder_output/gather_v2/kernel/gather_v2_kernel.h"
+  },
+  "thought": {
+    "id": "tbuf_direct_datacopy_gather_v2",
+    "title": "TBuf 直接 DataCopy 替代 TQue VECIN/VECOUT 队列",
+    "description": "将 ProcessRow 从 TQue VECIN→Adds(0)→VECOUT 队列管线改为 TBuf VECCALC + 直接 DataCopy(GM↔UB) + PipeBarrier。每 dim tile 操作从 11 步减少到 3 步, 消除 Adds(0) 恒等计算和队列 EnQue/DeQue/FreeTensor 开销。dim tiling TILE_DIM=256 保证 UB 安全。block_M=128, 2 sub-blocks, max 32 cores",
+    "reason": "TQue 队列管线虽为标准范式，但每 dim tile 需 11 步操作(AllocTensor×2, EnQue×2, DeQue×2, FreeTensor×2, DataCopy×2, Adds)。对于纯数据搬运算子，不存在需要队列保序的跨 tile 依赖，直接 TBuf+DataCopy 更高效。减少的操作次数降低了指令发射开销",
+    "opt_layer": "instruction",
+    "target_bottleneck": "pybind11+launch fixed overhead ~0.1ms dominates small shapes",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "X[8192..262144,128..512],indices[1024..8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "gather",
+      "index",
+      "data-movement",
+      "irregular-memory"
+    ],
+    "task_tags": [
+      "TBuf",
+      "DataCopy",
+      "vectorization",
+      "PipeBarrier",
+      "dim-tiling"
+    ]
+  },
+  "effect": {
+    "label": "partial",
+    "confidence": 0.85,
+    "thought_match": "high",
+    "step_improvement": 1.04
+  },
+  "chain": {
+    "session_id": "sess_gather_v2_20260614_4521",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "tbuf_direct_datacopy_gather_v2"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "TQue VECIN→Adds(0)→VECOUT: AllocTensor→DataCopy→EnQue→DeQue→AllocTensor→Adds→EnQue→DeQue→DataCopy→FreeTensor×2 (11 ops/tile)",
+    "dsl_after": "TBuf VECCALC + direct DataCopy: TBuf.Get→DataCopy(GM→UB)→PipeBarrier→DataCopy(UB→GM)→PipeBarrier (3 ops/tile)",
+    "profiling_path": "",
+    "created_at": "2026-06-14T18:18:16Z"
+  }
+}

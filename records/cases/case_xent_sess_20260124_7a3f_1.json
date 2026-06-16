@@ -1,0 +1,58 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_xent_sess_20260124_7a3f_1",
+  "kernel": {
+    "name": "xent",
+    "category": "reduction",
+    "compute_type": "memory_bound",
+    "path": "CHUNK=2048+ReduceMax/ReduceSum"
+  },
+  "thought": {
+    "id": "chunk-enlargement+vectorized-reduction",
+    "title": "xent Chunk-Enlargement+Vectorized-Reduction",
+    "description": "CHUNK 64→2048; 标量循环归约→ReduceMax/ReduceSum",
+    "reason": "xent_tiling.h: XENT_CHUNK=64→2048; xent_kernel.h: Pass1使用ReduceMax代替标量max, Pass2使用ReduceSum+Exp+Adds代替标量累加; 新增TBuf workBuf; sBuf扩展为4 float",
+    "opt_layer": "instruction",
+    "related_opt_layers": [],
+    "target_bottleneck": "memory_bound",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=4096,V=152064",
+    "dtype": "float16",
+    "data_tags": "large_vocab,reduction",
+    "task_tags": "cross_entropy,loss"
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 2.781,
+    "metric_changes": {
+      "task_duration_us": {
+        "before": 26517,
+        "after": 9535
+      }
+    }
+  },
+  "chain": {
+    "session_id": "sess_cross_entropy_loss_20260124_7a3f",
+    "step_index": 1,
+    "prev_thought_id": "step_0",
+    "prev_case_id": "case_xent_sess_20260124_7a3f_0",
+    "full_sequence_hint": [
+      "step_0",
+      "step_1"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "CHUNK=512+ReduceMax/ReduceSum",
+    "dsl_after": "CHUNK=2048+ReduceMax/ReduceSum",
+    "profiling_path": "",
+    "created_at": "2026-06-15T16:07:43Z"
+  }
+}

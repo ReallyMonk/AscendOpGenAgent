@@ -1,0 +1,28 @@
+{
+  "case_id": "case_gelu_sess_gelu_20260609_stepR03",
+  "kernel_name": "gelu",
+  "category": "activation",
+  "compute_type": "memory_bound",
+  "effect_label": "effective",
+  "step_improvement": 1.067,
+  "thought_id": "gelu_r03_optimization",
+  "thought_title": "gelu: R03 optimization — 1.07x speedup",
+  "thought_desc": "Applied R03 optimization to gelu kernel",
+  "opt_layer": "instruction",
+  "confidence": 0.85,
+  "session_id": "sess_gelu_20260609",
+  "step_index": 3,
+  "dtype": "float16",
+  "shape_signature": "[M,N]; N<=8192",
+  "target_bottleneck": "GM_bandwidth",
+  "data_tags": "activation,elementwise,memory_bound",
+  "task_tags": "inference,optimization",
+  "timestamp": "2026-06-09T09:06:04.875642",
+  "metric_changes": {
+    "task_duration_us": {
+      "before": 203,
+      "after": 190
+    },
+    "speedup": 1.067
+  }
+}

@@ -1,0 +1,1 @@
+{"operator": "softmax_v2", "results": {"S1": 3.80257, "S2": 101.209418}, "best_speedup": 1.00048308782508, "best_round": "R06"}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_avg_pool2d_sess_20260615_0001_0",
+  "kernel": {
+    "name": "avg_pool2d",
+    "category": "other",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "ap_scalar_baseline",
+    "title": "avg_pool2d 标量基线 kernel",
+    "description": "2x2 平均池化 (stride=2)，仅 fp32。通过 M=NC*Ho 行分块做多核并行 (blockM=128, 32核)。每行用 GetValue 取 4 个输入元素求平均，SetValue 写输出。",
+    "reason": "shape 极小，标量方案虽慢但 launch overhead 主导性能，向量化收益有限",
+    "opt_layer": "none",
+    "target_bottleneck": "spatial_tiling",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "N=1-8,C=64-512,HxW=14-56,fp32",
+    "dtype": "float32",
+    "data_tags": [],
+    "task_tags": []
+  },
+  "effect": {
+    "label": "effective",
+    "confidence": 0.9,
+    "thought_match": "high",
+    "step_improvement": 1.0
+  },
+  "chain": {
+    "session_id": "sess_avg_pool2d_20250615_0001",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "ap_scalar_baseline"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 0,
+    "dsl_before": "",
+    "dsl_after": "",
+    "profiling_path": "",
+    "created_at": "2026-06-15T19:25:48Z"
+  }
+}

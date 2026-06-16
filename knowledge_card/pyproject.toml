@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ascend-knowledge-cards"
+version = "0.1.0"
+description = "Standalone MCP server for AscendC optimization knowledge cards"
+requires-python = ">=3.10"
+authors = [
+    { name = "AscendOpGenAgent" },
+]
+dependencies = [
+    "modelcontextprotocol>=1.0.0",
+    "jsonschema>=4.0.0",
+]
+
+[project.scripts]
+knowledge-cards-mcp = "knowledge_card.knowledge_card_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/knowledge_card"]

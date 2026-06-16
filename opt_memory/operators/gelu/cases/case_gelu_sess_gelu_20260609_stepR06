@@ -1,0 +1,17 @@
+{
+  "case_id": "case_gelu_sess_gelu_20260609_stepR06",
+  "kernel_name": "gelu",
+  "category": "activation",
+  "compute_type": "memory_bound",
+  "effect_label": "effective",
+  "step_improvement": 1.025,
+  "thought_title": "gelu: R06 — ×1.025 speedup",
+  "thought_desc": "Applied R06 optimization",
+  "session_id": "sess_gelu_20260609",
+  "step_index": 6,
+  "dtype": "torch.float16",
+  "shape_signature": "[(1024, 1024), (4096, 3584), (4096, 8192)]",
+  "target_bottleneck": "GM_bandwidth",
+  "confidence": 0.85,
+  "timestamp": "2026-06-09T09:39:05.887492"
+}

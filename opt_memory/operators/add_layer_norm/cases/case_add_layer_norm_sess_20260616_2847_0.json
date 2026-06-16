@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.2.0",
+  "case_id": "case_add_layer_norm_sess_20260616_2847_0",
+  "kernel": {
+    "name": "add_layer_norm",
+    "category": "normalization",
+    "compute_type": "memory_bound",
+    "path": ""
+  },
+  "thought": {
+    "id": "scalar_baseline",
+    "title": "标量循环归约基线",
+    "description": "使用 O(N) 标量循环做均值和方差归约 (for i=0..N: sumVal+=computeFp32(i); sumSqVal+=val*val)。预加载 gamma/beta 到 UB，使用 MIX_AIC_1_1、最小缓冲区布局 (4 TBuf + 3 TQue)。精度通过但性能极差。",
+    "reason": "对标 baseline 实现，验证精度正确性。标量循环在 AIV 上每条指令只能处理一个 float，O(N) 开销极大。",
+    "opt_layer": "instruction",
+    "target_bottleneck": "reduction",
+    "apply_scenario": "performance",
+    "apply_stage": "optimization"
+  },
+  "scene": {
+    "shape_signature": "M=[1024,4096], N=[3584,5120,8192]",
+    "dtype": "float16",
+    "data_tags": [
+      "fusion",
+      "residual",
+      "layernorm",
+      "baseline"
+    ],
+    "task_tags": [
+      "initial",
+      "scalar",
+      "precision_pass"
+    ]
+  },
+  "effect": {
+    "label": "ineffective",
+    "confidence": 0.95,
+    "thought_match": "high",
+    "step_improvement": 0.157
+  },
+  "chain": {
+    "session_id": "sess_add_layer_norm_20250616_2847",
+    "step_index": 0,
+    "prev_thought_id": "baseline",
+    "prev_case_id": null,
+    "full_sequence_hint": [
+      "reduce_sum_vectorization",
+      "scalar_baseline"
+    ]
+  },
+  "runtime": {
+    "device": "Ascend910B",
+    "agent": "kope",
+    "iteration": 1,
+    "dsl_before": "baseline reference (no prior AscendC)",
+    "dsl_after": "scalar_loop: for(i=0;i<N;i++){sumVal+=val;sumSqVal+=val*val;}",
+    "profiling_path": "",
+    "created_at": "2026-06-16T10:43:02Z"
+  }
+}
